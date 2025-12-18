@@ -1,0 +1,226 @@
+# .github/actions/dhcaas-gate/action.yml
+name: 'DHCaaS Data Quality Gate'
+description: 'Enforce data contracts and quality rules in CI/CD pipeline'
+inputs:
+  api_key:
+    description: 'DHCaaS API key'
+    required: true
+  tenant_id:
+    description: 'Tenant ID'
+    required: true
+  dataset_id:
+    description: 'Dataset ID to validate'
+    required: true
+  schema_file:
+    description: 'Path to schema definition file'
+    required: true
+  fail_on_violations:
+    description: 'Fail build on rule violations'
+    required: false
+    default: 'true'
+  simulate_in_digital_twin:
+    description: 'Run simulation before validation'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install DHCaaS CLI
+      shell: bash
+      run: |
+        pip install dhcaas-cli
+        
+    - name: Validate Schema Contract
+      shell: bash
+      env:
+        DHCAAS_API_KEY: ${{ inputs.api_key }}
+        DHCAAS_TENANT_ID: ${{ inputs.tenant_id }}
+      run: |
+        echo "🔍 Validating schema contract for dataset: ${{ inputs.dataset_id }}"
+        
+        # Compare proposed schema with production
+        dhcaas schema validate \
+          --dataset-id "${{ inputs.dataset_id }}" \
+          --schema-file "${{ inputs.schema_file }}" \
+          --output json > schema_validation.json
+        
+        # Check for breaking changes
+        BREAKING_CHANGES=$(jq '.breaking_changes | length' schema_validation.json)
+        
+        if [ "$BREAKING_CHANGES" -gt 0 ]; then
+          echo "❌ Breaking schema changes detected:"
+          jq '.breaking_changes[]' schema_validation.json
+          
+          if [ "${{ inputs.fail_on_violations }}" == "true" ]; then
+            exit 1
+          fi
+        else
+          echo "✅ No breaking schema changes"
+        fi
+        
+    - name: Simulate in Digital Twin
+      if: inputs.simulate_in_digital_twin == 'true'
+      shell: bash
+      env:
+        DHCAAS_API_KEY: ${{ inputs.api_key }}
+        DHCAAS_TENANT_ID: ${{ inputs.tenant_id }}
+      run: |
+        echo "🔮 Running Digital Twin simulation..."
+        
+        # Create simulation with proposed changes
+        SIMULATION_ID=$(dhcaas digital-twin simulate \
+          --dataset-id "${{ inputs.dataset_id }}" \
+          --schema-file "${{ inputs.schema_file }}" \
+          --compliance GDPR CCPA \
+          --output json | jq -r '.simulation_id')
+        
+        echo "Simulation ID: $SIMULATION_ID"
+        
+        # Wait for simulation to complete
+        dhcaas digital-twin wait --simulation-id "$SIMULATION_ID"
+        
+        # Get simulation results
+        dhcaas digital-twin get --simulation-id "$SIMULATION_ID" --output json > simulation_results.json
+        
+        # Check risk level
+        RISK_LEVEL=$(jq -r '.risk_assessment.risk_level' simulation_results.json)
+        RISK_SCORE=$(jq -r '.risk_assessment.overall_risk_score' simulation_results.json)
+        
+        echo "Risk Level: $RISK_LEVEL (Score: $RISK_SCORE)"
+        
+        if [ "$RISK_LEVEL" == "CRITICAL" ] || [ "$RISK_LEVEL" == "HIGH" ]; then
+          echo "⚠️  High risk deployment detected!"
+          jq '.risk_assessment.risks[]' simulation_results.json
+          
+          echo "📋 Recommendations:"
+          jq '.recommendations[]' simulation_results.json
+          
+          if [ "${{ inputs.fail_on_violations }}" == "true" ]; then
+            exit 1
+          fi
+        else
+          echo "✅ Simulation passed with $RISK_LEVEL risk"
+        fi
+        
+    - name: Execute Data Quality Rules
+      shell: bash
+      env:
+        DHCAAS_API_KEY: ${{ inputs.api_key }}
+        DHCAAS_TENANT_ID: ${{ inputs.tenant_id }}
+      run: |
+        echo "🎯 Executing data quality rules..."
+        
+        # Get all rules for dataset
+        dhcaas rules list --dataset-id "${{ inputs.dataset_id }}" --output json > rules.json
+        
+        RULE_COUNT=$(jq '. | length' rules.json)
+        echo "Found $RULE_COUNT rules to execute"
+        
+        # Execute rules
+        dhcaas rules execute \
+          --dataset-id "${{ inputs.dataset_id }}" \
+          --wait \
+          --output json > rule_results.json
+        
+        # Check for violations
+        VIOLATIONS=$(jq '[.results[] | select(.success == false)] | length' rule_results.json)
+        
+        if [ "$VIOLATIONS" -gt 0 ]; then
+          echo "❌ $VIOLATIONS rule violations found:"
+          jq '[.results[] | select(.success == false)]' rule_results.json
+          
+          if [ "${{ inputs.fail_on_violations }}" == "true" ]; then
+            exit 1
+          fi
+        else
+          echo "✅ All $RULE_COUNT rules passed"
+        fi
+        
+    - name: Calculate Impact Analysis
+      shell: bash
+      env:
+        DHCAAS_API_KEY: ${{ inputs.api_key }}
+        DHCAAS_TENANT_ID: ${{ inputs.tenant_id }}
+      run: |
+        echo "📊 Calculating downstream impact..."
+        
+        # Get blast radius
+        dhcaas lineage blast-radius \
+          --table "${{ inputs.dataset_id }}" \
+          --output json > blast_radius.json
+        
+        IMPACTED_TABLES=$(jq '.total_impacted' blast_radius.json)
+        BLAST_RADIUS_SCORE=$(jq -r '.blast_radius_score' blast_radius.json)
+        
+        echo "Impacted tables: $IMPACTED_TABLES"
+        echo "Blast radius: $BLAST_RADIUS_SCORE"
+        
+        if [ "$BLAST_RADIUS_SCORE" == "CRITICAL" ] || [ "$BLAST_RADIUS_SCORE" == "HIGH" ]; then
+          echo "⚠️  High impact deployment!"
+          echo "Affected downstream tables:"
+          jq '.impacted_tables[]' blast_radius.json
+          
+          # Notify stakeholders
+          echo "📧 Notifying downstream data owners..."
+          dhcaas notify downstream-owners \
+            --table "${{ inputs.dataset_id }}" \
+            --message "Schema change detected - please review"
+        fi
+        
+    - name: Generate Quality Gate Report
+      shell: bash
+      run: |
+        echo "📝 Generating quality gate report..."
+        
+        cat > quality_gate_report.md << 'EOF'
+        # DHCaaS Data Quality Gate Report
+        
+        ## Dataset: ${{ inputs.dataset_id }}
+        
+        ### Schema Validation
+        $(cat schema_validation.json | jq -r '
+          if .breaking_changes | length > 0 then
+            "❌ Breaking Changes: " + (.breaking_changes | length | tostring) + "\n" +
+            (.breaking_changes | map("- " + .type + ": " + .description) | join("\n"))
+          else
+            "✅ No breaking changes"
+          end
+        ')
+        
+        ### Digital Twin Simulation
+        $(cat simulation_results.json | jq -r '
+          "Risk Level: " + .risk_assessment.risk_level + " (" + (.risk_assessment.overall_risk_score | tostring) + "/100)\n\n" +
+          if (.risk_assessment.risks | length > 0) then
+            "Risks:\n" + (.risk_assessment.risks | map("- " + .category + ": " + .description) | join("\n"))
+          else
+            "No significant risks detected"
+          end
+        ')
+        
+        ### Rule Execution
+        $(cat rule_results.json | jq -r '
+          "Total Rules: " + (.results | length | tostring) + "\n" +
+          "Passed: " + ([.results[] | select(.success == true)] | length | tostring) + "\n" +
+          "Failed: " + ([.results[] | select(.success == false)] | length | tostring)
+        ')
+        
+        ### Blast Radius
+        $(cat blast_radius.json | jq -r '
+          "Impacted Tables: " + (.total_impacted | tostring) + "\n" +
+          "Severity: " + .blast_radius_score
+        ')
+        EOF
+        
+        cat quality_gate_report.md
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dhcaas-quality-gate-results
+        path: |
+          schema_validation.json
+          simulation_results.json
+          rule_results.json
+          blast_radius.json
+          quality_gate_report.md
