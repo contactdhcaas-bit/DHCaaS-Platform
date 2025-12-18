@@ -12,3 +12,7 @@
 
 # Python wheels / binaries
 *.whl
+
+__pycache__/
+*.pyc
+
