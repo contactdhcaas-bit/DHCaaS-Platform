@@ -4,6 +4,7 @@ import { Layout } from "./components/layout/Layout";
 import { UploadPage } from "./pages/Upload";
 import { JobsPage } from "./pages/Jobs";
 import { JobDetailsPage } from "./pages/JobDetails";
+import 
 
 const Home: React.FC = () => {
   return (
