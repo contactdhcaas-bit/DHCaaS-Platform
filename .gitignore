@@ -16,3 +16,7 @@
 __pycache__/
 *.pyc
 
+
+*.whl
+ersData Health Check Intercafe*
+
