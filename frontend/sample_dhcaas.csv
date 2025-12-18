@@ -1,0 +1,6 @@
+﻿id,name,email,phone,amount,created_at
+1,Ahmed,ahmed@example.com,+212600000001,1200,2025-12-01
+2,Sara,sara@example.com,+212600000002,850,2025-12-02
+3,Youssef,youssef@example.com,+212600000003,,2025-12-03
+4,Fatima,fatima@example.com,+212600000004,430,2025-12-04
+5,Omar,omar@example.com,+212600000005,999,2025-12-05

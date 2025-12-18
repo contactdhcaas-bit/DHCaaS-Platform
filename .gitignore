@@ -1,0 +1,14 @@
+﻿# Dependencies / builds
+**/node_modules/
+**/dist/
+**/build/
+
+# Env / secrets (do NOT commit)
+**/.env*
+!.env.example
+
+# Logs
+*.log
+
+# Python wheels / binaries
+*.whl
