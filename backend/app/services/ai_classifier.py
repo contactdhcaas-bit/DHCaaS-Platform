@@ -1,491 +1,386 @@
-"""
-AI-Powered Data Classification Service
-Competes with Informatica CLAIRE AI
-Automatically tags and classifies data columns based on intelligent rule-based engine
+﻿"""
+AI Data Classification Engine - Service Layer
+Analyzes datasets and classifies columns using pattern matching and heuristics.
+Zero dependencies on FastAPI - Pure business logic.
 """
 
+import pandas as pd
+import uuid
+import time
 import re
-from typing import Dict, List, Any, Optional
-from datetime import datetime
+from typing import Dict, List, Any, Tuple, Optional
+from io import BytesIO
 
 
-class AIClassifier:
+class DataClassifier:
     """
-    Intelligent Rule-Based AI Engine for automatic data classification.
-    Analyzes column names and sample data to assign business context tags.
+    Core classification engine for detecting PII, sensitive data, and business categories.
+    Supports CSV and XLSX formats.
     """
     
-    # Classification Rules Configuration
-    FINANCIAL_PATTERNS = [
-        'price', 'amount', 'salary', 'revenue', 'cost', 'fee', 'charge',
-        'payment', 'balance', 'income', 'expense', 'profit', 'loss',
-        'budget', 'invoice', 'total', 'subtotal', 'tax', 'discount',
-        'wage', 'commission', 'bonus', 'refund', 'credit', 'debit'
-    ]
+    # Classification patterns and metadata
+    CLASSIFICATION_PATTERNS = {
+        "PII/Sensitive": {
+            "patterns": [
+                "email", "phone", "ssn", "password", "cin", "passport", 
+                "national_id", "tax_id", "social_security", "license", "credential"
+            ],
+            "sensitivity": "High",
+            "icon": "🔒",
+            "business_context": "Contains personally identifiable information",
+            "recommendations": [
+                "Encrypt this column in storage",
+                "Apply data masking before exporting",
+                "Restrict access to authorized users only",
+                "GDPR/Law 09-08 compliance required"
+            ]
+        },
+        "Financial": {
+            "patterns": [
+                "salary", "price", "amount", "revenue", "card", "payment", 
+                "invoice", "balance", "cost", "credit", "debit", "transaction"
+            ],
+            "sensitivity": "High",
+            "icon": "💰",
+            "business_context": "Contains financial or monetary data",
+            "recommendations": [
+                "Apply data masking for non-privileged users",
+                "Audit trail required for all modifications",
+                "Encrypt at rest and in transit",
+                "Monitor for unusual patterns"
+            ]
+        },
+        "Location": {
+            "patterns": [
+                "address", "city", "country", "zip", "postal", "location", 
+                "region", "latitude", "longitude", "coordinates", "place"
+            ],
+            "sensitivity": "Medium",
+            "icon": "📍",
+            "business_context": "Contains geographic or location data",
+            "recommendations": [
+                "Anonymize if not business-critical",
+                "Consider geohashing for privacy",
+                "Validate format consistency",
+                "Use for analytics with caution"
+            ]
+        },
+        "Temporal": {
+            "patterns": [
+                "date", "created", "updated", "time", "timestamp", "modified", 
+                "birth", "expiry", "start", "end", "deadline"
+            ],
+            "sensitivity": "Low",
+            "icon": "🕐",
+            "business_context": "Contains time-related information",
+            "recommendations": [
+                "Use for audit logging",
+                "Track data lineage",
+                "Standardize timezone handling",
+                "Monitor for data freshness"
+            ]
+        },
+        "Contact": {
+            "patterns": [
+                "name", "first_name", "last_name", "full_name", "username", 
+                "contact", "person", "user", "customer"
+            ],
+            "sensitivity": "Medium",
+            "icon": "👤",
+            "business_context": "Contains personal contact information",
+            "recommendations": [
+                "Validate format consistency",
+                "Consider anonymization for testing",
+                "Apply access controls",
+                "Review data retention policies"
+            ]
+        },
+        "Technical": {
+            "patterns": [
+                "id", "uuid", "key", "token", "hash", "index", "code", 
+                "reference", "identifier", "serial"
+            ],
+            "sensitivity": "Low",
+            "icon": "⚡",
+            "business_context": "Contains technical identifiers",
+            "recommendations": [
+                "Index for query performance",
+                "Ensure uniqueness constraints",
+                "Use for data relationships",
+                "Document ID generation logic"
+            ]
+        },
+        "Business": {
+            "patterns": [
+                "company", "department", "title", "role", "position", 
+                "organization", "team", "division", "branch"
+            ],
+            "sensitivity": "Low",
+            "icon": "🏢",
+            "business_context": "Contains business organizational data",
+            "recommendations": [
+                "Standardize naming conventions",
+                "Maintain data dictionaries",
+                "Use for reporting and analytics",
+                "Keep hierarchies up to date"
+            ]
+        },
+        "Metric": {
+            "patterns": [
+                "count", "total", "score", "rate", "percentage", "quantity", 
+                "number", "sum", "average", "value", "measure"
+            ],
+            "sensitivity": "Low",
+            "icon": "📊",
+            "business_context": "Contains quantitative measurements",
+            "recommendations": [
+                "Monitor for anomalies",
+                "Set up alerting thresholds",
+                "Validate data ranges",
+                "Use for KPI tracking"
+            ]
+        }
+    }
     
-    LOCATION_PATTERNS = [
-        'city', 'country', 'zip', 'postal', 'lat', 'latitude', 'lon',
-        'longitude', 'address', 'street', 'state', 'province', 'region',
-        'location', 'geo', 'territory', 'area', 'zone', 'district',
-        'county', 'municipality', 'coordinates', 'place'
-    ]
-    
-    TECHNICAL_PATTERNS = [
-        'id', 'key', 'guid', 'uuid', 'ip', 'mac', 'hash', 'token',
-        'index', 'ref', 'reference', 'pointer', 'pk', 'fk', 'code',
-        'identifier', 'serial', 'sequence', 'version', 'revision'
-    ]
-    
-    PII_SENSITIVE_PATTERNS = [
-        'email', 'phone', 'mobile', 'ssn', 'social_security', 'password',
-        'passport', 'license', 'driver', 'credit_card', 'card_number',
-        'account_number', 'bank', 'routing', 'pin', 'security',
-        'username', 'login', 'credential', 'birth_date', 'dob',
-        'personal', 'private', 'confidential', 'medical', 'health'
-    ]
-    
-    TEMPORAL_PATTERNS = [
-        'date', 'time', 'timestamp', 'datetime', 'created', 'updated',
-        'modified', 'deleted', 'scheduled', 'due', 'start', 'end',
-        'expired', 'valid', 'year', 'month', 'day', 'hour', 'minute'
-    ]
-    
-    CONTACT_PATTERNS = [
-        'name', 'first_name', 'last_name', 'full_name', 'contact',
-        'customer', 'client', 'vendor', 'supplier', 'employee',
-        'person', 'user', 'member', 'subscriber'
-    ]
-    
-    BUSINESS_PATTERNS = [
-        'product', 'service', 'order', 'transaction', 'sale', 'purchase',
-        'inventory', 'stock', 'sku', 'category', 'department', 'division',
-        'company', 'organization', 'business', 'merchant', 'brand'
-    ]
-    
-    METRIC_PATTERNS = [
-        'count', 'total', 'sum', 'average', 'mean', 'median', 'max',
-        'min', 'rate', 'ratio', 'percentage', 'score', 'rank',
-        'quantity', 'volume', 'weight', 'size', 'length', 'width'
-    ]
-    
-    def __init__(self):
-        """Initialize the AI Classifier."""
-        self.classification_history = []
-    
-    def classify_schema(
-        self, 
-        columns: List[Dict[str, Any]], 
-        sample_data: Optional[List[Dict[str, Any]]] = None
-    ) -> Dict[str, Dict[str, Any]]:
+    def __init__(self, file_bytes: bytes, filename: str):
         """
-        Main classification function - analyzes columns and returns tags.
+        Initialize the classifier with file data.
         
         Args:
-            columns: List of column dictionaries with 'name' and optional metadata
-            sample_data: Optional list of sample data rows for content analysis
+            file_bytes: Raw file content as bytes
+            filename: Original filename (used for format detection)
+        """
+        self.file_bytes = file_bytes
+        self.filename = filename
+        self.analysis_id = str(uuid.uuid4())
+        self.start_time = time.time()
+        self.df: Optional[pd.DataFrame] = None
+        
+    def analyze(self) -> Dict[str, Any]:
+        """
+        Main entry point - performs complete analysis and returns results.
         
         Returns:
-            Dictionary mapping column names to their classification tags
+            Dictionary matching frontend ClassificationResult interface
             
-        Example:
-            {
-                'email': {
-                    'category': 'PII/Sensitive',
-                    'sensitivity': 'High',
-                    'business_context': 'Contact Information',
-                    'data_type': 'Email Address',
-                    'icon': '🔒',
-                    'confidence': 0.95
+        Raises:
+            ValueError: If file format is unsupported or file is empty
+            Exception: For pandas parsing errors
+        """
+        try:
+            # Load data into DataFrame
+            self._load_dataframe()
+            
+            # Validate dataset
+            if self.df is None or self.df.empty:
+                raise ValueError("File contains no data")
+            
+            if len(self.df.columns) == 0:
+                raise ValueError("File contains no columns")
+            
+            # Classify each column
+            classified_columns = []
+            categories_count: Dict[str, int] = {}
+            sensitivity_count: Dict[str, int] = {}
+            total_confidence = 0.0
+            
+            for col_name in self.df.columns:
+                col_data = self.df[col_name]
+                classification = self._classify_column(col_name, col_data)
+                classified_columns.append(classification)
+                
+                # Update counters
+                category = classification["ai_classification"]["category"]
+                sensitivity = classification["ai_classification"]["sensitivity"]
+                categories_count[category] = categories_count.get(category, 0) + 1
+                sensitivity_count[sensitivity] = sensitivity_count.get(sensitivity, 0) + 1
+                total_confidence += classification["ai_classification"]["confidence"]
+            
+            # Calculate summary statistics
+            total_columns = len(self.df.columns)
+            pii_columns = sum(1 for col in classified_columns 
+                            if col["ai_classification"]["category"] == "PII/Sensitive")
+            sensitive_columns = sum(1 for col in classified_columns 
+                                  if col["ai_classification"]["sensitivity"] in ["High", "Medium"])
+            high_confidence_rate = (total_confidence / total_columns) * 100
+            
+            # Calculate latency
+            latency_ms = int((time.time() - self.start_time) * 1000)
+            
+            # Build final response
+            return {
+                "analysis_id": self.analysis_id,
+                "file_name": self.filename,
+                "latency_ms": latency_ms,
+                "dataset_summary": {
+                    "total_rows": len(self.df),
+                    "total_columns": total_columns,
+                    "pii_columns": pii_columns,
+                    "sensitive_columns": sensitive_columns,
+                    "categories_detected": len(categories_count),
+                    "high_confidence_rate": round(high_confidence_rate, 2)
+                },
+                "columns": classified_columns,
+                "classification_summary": {
+                    "total_columns_classified": total_columns,
+                    "categories_breakdown": categories_count,
+                    "sensitivity_breakdown": sensitivity_count
                 }
             }
-        """
-        classifications = {}
-        
-        for column in columns:
-            column_name = column.get('name', '').lower()
-            data_type = column.get('data_type', 'unknown')
             
-            # Get sample values if available
-            sample_values = self._extract_sample_values(column_name, sample_data)
-            
-            # Classify the column
-            tags = self._classify_column(column_name, data_type, sample_values)
-            
-            classifications[column.get('name')] = tags
-        
-        # Store classification history for analytics
-        self._record_classification(classifications)
-        
-        return classifications
+        except pd.errors.EmptyDataError:
+            raise ValueError("File is empty or contains no parseable data")
+        except pd.errors.ParserError as e:
+            raise ValueError(f"Failed to parse file: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Analysis failed: {str(e)}")
     
-    def _classify_column(
-        self, 
-        column_name: str, 
-        data_type: str, 
-        sample_values: List[Any]
-    ) -> Dict[str, Any]:
+    def _load_dataframe(self) -> None:
         """
-        Core classification logic for a single column.
+        Loads file bytes into a pandas DataFrame based on file extension.
+        
+        Raises:
+            ValueError: If file format is unsupported
+        """
+        file_lower = self.filename.lower()
+        buffer = BytesIO(self.file_bytes)
+        
+        if file_lower.endswith('.csv'):
+            self.df = pd.read_csv(buffer)
+        elif file_lower.endswith(('.xlsx', '.xls')):
+            self.df = pd.read_excel(buffer)
+        else:
+            raise ValueError(f"Unsupported file format. Only CSV and XLSX are supported.")
+    
+    def _classify_column(self, col_name: str, col_data: pd.Series) -> Dict[str, Any]:
+        """
+        Classifies a single column using pattern matching and data analysis.
         
         Args:
-            column_name: Lowercase column name
-            data_type: Data type of the column
-            sample_values: Sample values from the column
-        
-        Returns:
-            Classification tags dictionary
-        """
-        tags = {
-            'category': 'General',
-            'sensitivity': 'Low',
-            'business_context': 'Operational Data',
-            'data_type': data_type,
-            'icon': '📊',
-            'confidence': 0.5,
-            'patterns_matched': [],
-            'recommendations': []
-        }
-        
-        # Priority 1: PII/Sensitive (Highest Security)
-        if self._matches_patterns(column_name, self.PII_SENSITIVE_PATTERNS):
-            tags.update({
-                'category': 'PII/Sensitive',
-                'sensitivity': 'High',
-                'business_context': 'Personal Identifiable Information',
-                'icon': '🔒',
-                'confidence': 0.95,
-                'patterns_matched': self._get_matched_patterns(column_name, self.PII_SENSITIVE_PATTERNS),
-                'recommendations': [
-                    'Enable encryption at rest',
-                    'Apply access controls',
-                    'Monitor for data leakage',
-                    'Consider data masking for non-prod environments'
-                ]
-            })
-            return tags
-        
-        # Priority 2: Financial Data
-        if self._matches_patterns(column_name, self.FINANCIAL_PATTERNS):
-            tags.update({
-                'category': 'Financial',
-                'sensitivity': 'High',
-                'business_context': 'Financial/Monetary Data',
-                'icon': '💰',
-                'confidence': 0.90,
-                'patterns_matched': self._get_matched_patterns(column_name, self.FINANCIAL_PATTERNS),
-                'recommendations': [
-                    'Implement audit logging',
-                    'Validate numeric precision',
-                    'Apply currency formatting rules'
-                ]
-            })
-            return tags
-        
-        # Priority 3: Location/Geographic
-        if self._matches_patterns(column_name, self.LOCATION_PATTERNS):
-            tags.update({
-                'category': 'Location',
-                'sensitivity': 'Medium',
-                'business_context': 'Geographic/Location Data',
-                'icon': '🌍',
-                'confidence': 0.88,
-                'patterns_matched': self._get_matched_patterns(column_name, self.LOCATION_PATTERNS),
-                'recommendations': [
-                    'Validate geographic coordinates',
-                    'Standardize address formats',
-                    'Enable geocoding capabilities'
-                ]
-            })
-            return tags
-        
-        # Priority 4: Technical/System
-        if self._matches_patterns(column_name, self.TECHNICAL_PATTERNS):
-            tags.update({
-                'category': 'Technical',
-                'sensitivity': 'Low',
-                'business_context': 'System/Technical Identifier',
-                'icon': '⚙️',
-                'confidence': 0.92,
-                'patterns_matched': self._get_matched_patterns(column_name, self.TECHNICAL_PATTERNS),
-                'recommendations': [
-                    'Ensure uniqueness constraints',
-                    'Index for query performance',
-                    'Validate format consistency'
-                ]
-            })
-            return tags
-        
-        # Priority 5: Temporal Data
-        if self._matches_patterns(column_name, self.TEMPORAL_PATTERNS):
-            tags.update({
-                'category': 'Temporal',
-                'sensitivity': 'Low',
-                'business_context': 'Date/Time Information',
-                'icon': '📅',
-                'confidence': 0.87,
-                'patterns_matched': self._get_matched_patterns(column_name, self.TEMPORAL_PATTERNS),
-                'recommendations': [
-                    'Standardize timezone handling',
-                    'Validate date ranges',
-                    'Apply consistent date formats'
-                ]
-            })
-            return tags
-        
-        # Priority 6: Contact Information
-        if self._matches_patterns(column_name, self.CONTACT_PATTERNS):
-            tags.update({
-                'category': 'Contact',
-                'sensitivity': 'Medium',
-                'business_context': 'Contact/Identity Information',
-                'icon': '👤',
-                'confidence': 0.85,
-                'patterns_matched': self._get_matched_patterns(column_name, self.CONTACT_PATTERNS),
-                'recommendations': [
-                    'Apply name standardization',
-                    'Enable fuzzy matching',
-                    'Consider deduplication'
-                ]
-            })
-            return tags
-        
-        # Priority 7: Business Domain
-        if self._matches_patterns(column_name, self.BUSINESS_PATTERNS):
-            tags.update({
-                'category': 'Business',
-                'sensitivity': 'Low',
-                'business_context': 'Business Domain Data',
-                'icon': '🏢',
-                'confidence': 0.82,
-                'patterns_matched': self._get_matched_patterns(column_name, self.BUSINESS_PATTERNS),
-                'recommendations': [
-                    'Maintain referential integrity',
-                    'Apply business rules validation',
-                    'Enable business glossary linking'
-                ]
-            })
-            return tags
-        
-        # Priority 8: Metrics/Measurements
-        if self._matches_patterns(column_name, self.METRIC_PATTERNS):
-            tags.update({
-                'category': 'Metric',
-                'sensitivity': 'Low',
-                'business_context': 'Measurement/Statistical Data',
-                'icon': '📈',
-                'confidence': 0.80,
-                'patterns_matched': self._get_matched_patterns(column_name, self.METRIC_PATTERNS),
-                'recommendations': [
-                    'Validate numeric ranges',
-                    'Apply statistical analysis',
-                    'Enable trend monitoring'
-                ]
-            })
-            return tags
-        
-        # Content-based classification (if sample data available)
-        if sample_values:
-            content_tags = self._classify_by_content(sample_values)
-            if content_tags['confidence'] > tags['confidence']:
-                tags.update(content_tags)
-        
-        return tags
-    
-    def _matches_patterns(self, column_name: str, patterns: List[str]) -> bool:
-        """Check if column name matches any pattern in the list."""
-        for pattern in patterns:
-            if pattern in column_name or column_name in pattern:
-                return True
-        return False
-    
-    def _get_matched_patterns(self, column_name: str, patterns: List[str]) -> List[str]:
-        """Get list of patterns that matched the column name."""
-        matched = []
-        for pattern in patterns:
-            if pattern in column_name or column_name in pattern:
-                matched.append(pattern)
-        return matched
-    
-    def _extract_sample_values(
-        self, 
-        column_name: str, 
-        sample_data: Optional[List[Dict[str, Any]]]
-    ) -> List[Any]:
-        """Extract sample values for a specific column from sample data."""
-        if not sample_data:
-            return []
-        
-        values = []
-        for row in sample_data[:10]:  # Analyze up to 10 sample rows
-            if column_name in row:
-                values.append(row[column_name])
-        
-        return values
-    
-    def _classify_by_content(self, sample_values: List[Any]) -> Dict[str, Any]:
-        """
-        Classify column based on actual data content.
-        Uses pattern matching on sample values.
-        """
-        tags = {
-            'category': 'General',
-            'sensitivity': 'Low',
-            'confidence': 0.5
-        }
-        
-        if not sample_values:
-            return tags
-        
-        # Convert to strings for pattern matching
-        str_values = [str(v) for v in sample_values if v is not None]
-        
-        if not str_values:
-            return tags
-        
-        # Email pattern detection
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        email_matches = sum(1 for v in str_values if re.match(email_pattern, v))
-        if email_matches / len(str_values) > 0.7:
-            return {
-                'category': 'PII/Sensitive',
-                'sensitivity': 'High',
-                'business_context': 'Email Address',
-                'icon': '📧',
-                'confidence': 0.95,
-                'patterns_matched': ['email_format'],
-                'recommendations': ['Validate email format', 'Enable email verification']
-            }
-        
-        # Phone number pattern
-        phone_pattern = r'^\+?[\d\s\-\(\)]{10,}$'
-        phone_matches = sum(1 for v in str_values if re.match(phone_pattern, v))
-        if phone_matches / len(str_values) > 0.7:
-            return {
-                'category': 'PII/Sensitive',
-                'sensitivity': 'High',
-                'business_context': 'Phone Number',
-                'icon': '📱',
-                'confidence': 0.93,
-                'patterns_matched': ['phone_format'],
-                'recommendations': ['Standardize phone format', 'Validate country codes']
-            }
-        
-        # URL pattern
-        url_pattern = r'^https?://'
-        url_matches = sum(1 for v in str_values if re.match(url_pattern, v))
-        if url_matches / len(str_values) > 0.7:
-            return {
-                'category': 'Technical',
-                'sensitivity': 'Low',
-                'business_context': 'URL/Web Address',
-                'icon': '🔗',
-                'confidence': 0.90,
-                'patterns_matched': ['url_format'],
-                'recommendations': ['Validate URL accessibility', 'Check for broken links']
-            }
-        
-        # Numeric currency values
-        try:
-            numeric_values = [float(v) for v in str_values if self._is_numeric(v)]
-            if len(numeric_values) / len(str_values) > 0.8:
-                # Check if values look like currency (reasonable ranges)
-                if any(v > 0.01 and v < 1000000 for v in numeric_values):
-                    return {
-                        'category': 'Financial',
-                        'sensitivity': 'High',
-                        'business_context': 'Monetary Value',
-                        'icon': '💵',
-                        'confidence': 0.85,
-                        'patterns_matched': ['numeric_currency_range'],
-                        'recommendations': ['Apply currency formatting', 'Validate precision']
-                    }
-        except:
-            pass
-        
-        return tags
-    
-    def _is_numeric(self, value: str) -> bool:
-        """Check if a string value can be converted to a number."""
-        try:
-            float(value)
-            return True
-        except:
-            return False
-    
-    def _record_classification(self, classifications: Dict[str, Any]):
-        """Record classification for analytics and learning."""
-        self.classification_history.append({
-            'timestamp': datetime.now().isoformat(),
-            'total_columns': len(classifications),
-            'categories': self._summarize_categories(classifications)
-        })
-    
-    def _summarize_categories(self, classifications: Dict[str, Any]) -> Dict[str, int]:
-        """Summarize classification results by category."""
-        summary = {}
-        for column, tags in classifications.items():
-            category = tags.get('category', 'General')
-            summary[category] = summary.get(category, 0) + 1
-        return summary
-    
-    def get_classification_summary(self, classifications: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Generate a summary report of classifications.
-        
-        Returns:
-            Summary statistics and insights
-        """
-        total_columns = len(classifications)
-        
-        # Count by category
-        category_counts = {}
-        sensitivity_counts = {'High': 0, 'Medium': 0, 'Low': 0}
-        high_confidence_count = 0
-        
-        for column, tags in classifications.items():
-            category = tags.get('category', 'General')
-            category_counts[category] = category_counts.get(category, 0) + 1
+            col_name: Name of the column
+            col_data: pandas Series containing the column data
             
-            sensitivity = tags.get('sensitivity', 'Low')
-            sensitivity_counts[sensitivity] = sensitivity_counts.get(sensitivity, 0) + 1
-            
-            if tags.get('confidence', 0) >= 0.85:
-                high_confidence_count += 1
+        Returns:
+            Dictionary with column name, data type, and AI classification
+        """
+        # Normalize column name for matching
+        normalized_name = self._normalize_column_name(col_name)
+        
+        # Find best matching category
+        category, confidence = self._find_best_category(normalized_name, col_data)
+        
+        # Get metadata for the category
+        category_info = self.CLASSIFICATION_PATTERNS.get(
+            category, 
+            self.CLASSIFICATION_PATTERNS["Technical"]
+        )
+        
+        # Detect pandas data type
+        data_type = str(col_data.dtype)
         
         return {
-            'total_columns_classified': total_columns,
-            'categories_breakdown': category_counts,
-            'sensitivity_breakdown': sensitivity_counts,
-            'high_confidence_classifications': high_confidence_count,
-            'confidence_rate': (high_confidence_count / total_columns * 100) if total_columns > 0 else 0,
-            'recommendations_generated': sum(len(tags.get('recommendations', [])) for tags in classifications.values())
+            "name": col_name,
+            "data_type": data_type,
+            "ai_classification": {
+                "category": category,
+                "sensitivity": category_info["sensitivity"],
+                "business_context": category_info["business_context"],
+                "icon": category_info["icon"],
+                "confidence": confidence,
+                "recommendations": category_info["recommendations"]
+            }
         }
-
-
-# Singleton instance
-_classifier_instance = None
-
-def get_classifier() -> AIClassifier:
-    """Get or create the AI Classifier singleton instance."""
-    global _classifier_instance
-    if _classifier_instance is None:
-        _classifier_instance = AIClassifier()
-    return _classifier_instance
-
-
-def classify_schema(
-    columns: List[Dict[str, Any]], 
-    sample_data: Optional[List[Dict[str, Any]]] = None
-) -> Dict[str, Dict[str, Any]]:
-    """
-    Convenience function to classify schema.
     
-    Args:
-        columns: List of column dictionaries
-        sample_data: Optional sample data for content analysis
+    def _find_best_category(self, normalized_name: str, col_data: pd.Series) -> Tuple[str, float]:
+        """
+        Determines the best matching category and confidence score.
+        
+        Args:
+            normalized_name: Normalized column name
+            col_data: Column data for pattern validation
+            
+        Returns:
+            Tuple of (category_name, confidence_score)
+        """
+        best_category = "Technical"
+        best_confidence = 0.60  # Default fallback confidence
+        
+        for category, info in self.CLASSIFICATION_PATTERNS.items():
+            for pattern in info["patterns"]:
+                if pattern in normalized_name:
+                    # Calculate confidence based on match quality
+                    if normalized_name == pattern:
+                        # Exact match
+                        confidence = 0.95
+                    elif normalized_name.startswith(pattern) or normalized_name.endswith(pattern):
+                        # Starts or ends with pattern
+                        confidence = 0.90
+                    else:
+                        # Contains pattern
+                        confidence = 0.85
+                    
+                    # Bonus: Validate with data patterns if high-confidence category
+                    if category in ["PII/Sensitive", "Financial"] and not col_data.empty:
+                        if self._validate_data_pattern(pattern, col_data):
+                            confidence += 0.05
+                    
+                    # Keep best match
+                    if confidence > best_confidence:
+                        best_category = category
+                        best_confidence = min(confidence, 1.0)  # Cap at 1.0
+        
+        return best_category, round(best_confidence, 2)
     
-    Returns:
-        Classification results dictionary
-    """
-    classifier = get_classifier()
-    return classifier.classify_schema(columns, sample_data)
+    def _validate_data_pattern(self, pattern: str, col_data: pd.Series) -> bool:
+        """
+        Validates if column data matches expected patterns for high-confidence categories.
+        
+        Args:
+            pattern: Pattern keyword (e.g., 'email', 'phone')
+            col_data: Column data to validate
+            
+        Returns:
+            True if data matches pattern, False otherwise
+        """
+        # Sample first 10 non-null values
+        sample = col_data.dropna().head(10).astype(str)
+        
+        if len(sample) == 0:
+            return False
+        
+        # Pattern validation rules
+        validators = {
+            "email": r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+            "phone": r'^\+?[\d\s\-\(\)]{7,}$',
+            "card": r'^\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}$',
+        }
+        
+        if pattern in validators:
+            regex = validators[pattern]
+            matches = sample.str.match(regex, na=False).sum()
+            return matches / len(sample) > 0.5  # At least 50% match
+        
+        return False
+    
+    def _normalize_column_name(self, col_name: str) -> str:
+        """
+        Normalizes column name for pattern matching.
+        
+        Args:
+            col_name: Original column name
+            
+        Returns:
+            Normalized lowercase name with underscores
+        """
+        # Convert to lowercase
+        normalized = col_name.lower()
+        # Replace spaces with underscores
+        normalized = normalized.replace(' ', '_')
+        # Remove special characters except underscores
+        normalized = re.sub(r'[^a-z0-9_]', '', normalized)
+        return normalized
+
+
+class DataClassifierException(Exception):
+    """Custom exception for classifier errors."""
+    pass
