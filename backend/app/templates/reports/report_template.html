@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DHCaaS Data Quality Report</title>
+    <link rel="stylesheet" href="report_style.css">
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header">
+        <div class="logo">
+            <h1>DHCaaS</h1>
+            <p class="tagline">Data Health Check as a Service</p>
+        </div>
+        <div class="report-info">
+            <p><strong>Report ID:</strong> {{ report_id }}</p>
+            <p><strong>Generated:</strong> {{ scan_date }}</p>
+            <p><strong>Organization:</strong> {{ organization }}</p>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="section">
+        <h2>Executive Summary</h2>
+        <div class="smart-score-card">
+            <div class="score-display">
+                <h1 class="score-number">{{ smart_score.overall_score }}</h1>
+                <span class="score-grade grade-{{ smart_score.grade }}">Grade {{ smart_score.grade }}</span>
+            </div>
+            <div class="score-details">
+                <p><strong>Datasource:</strong> {{ datasource_name }}</p>
+                <p><strong>Total Penalty:</strong> -{{ smart_score.total_penalty }} points</p>
+            </div>
+        </div>
+        <p class="summary-text">{{ executive_summary }}</p>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="section">
+        <h2>Key Metrics</h2>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>{{ key_metrics.total_records }}</h3>
+                <p>Total Records</p>
+            </div>
+            <div class="metric-card">
+                <h3>{{ key_metrics.issues_found }}</h3>
+                <p>Issues Found</p>
+            </div>
+            <div class="metric-card critical">
+                <h3>{{ key_metrics.critical_issues }}</h3>
+                <p>Critical Issues</p>
+            </div>
+            <div class="metric-card success">
+                <h3>{{ key_metrics.resolved_issues }}</h3>
+                <p>Resolved</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Findings -->
+    <div class="section">
+        <h2>Key Findings</h2>
+        <ul class="findings-list">
+            {% for finding in key_findings %}
+            <li>{{ finding }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Data Profile -->
+    <div class="section">
+        <h2>Data Profile</h2>
+        <table class="data-table">
+            <tr>
+                <th>Attribute</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>Datasource Name</td>
+                <td>{{ data_profile.datasource_name }}</td>
+            </tr>
+            <tr>
+                <td>Connection Type</td>
+                <td>{{ data_profile.connection_type }}</td>
+            </tr>
+            <tr>
+                <td>Total Tables</td>
+                <td>{{ data_profile.total_tables }}</td>
+            </tr>
+            <tr>
+                <td>Total Records</td>
+                <td>{{ data_profile.total_records }}</td>
+            </tr>
+            <tr>
+                <td>Data Volume</td>
+                <td>{{ data_profile.data_volume }}</td>
+            </tr>
+            <tr>
+                <td>Last Updated</td>
+                <td>{{ data_profile.last_updated }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Quality Dimensions -->
+    <div class="section">
+        <h2>Quality Dimensions</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Dimension</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dimension, details in quality_dimensions.items() %}
+                <tr>
+                    <td><strong>{{ dimension|title }}</strong></td>
+                    <td>{{ details.score }}%</td>
+                    <td><span class="status-badge status-{{ details.status|lower }}">{{ details.status }}</span></td>
+                    <td>{{ details.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Compliance & Governance Section -->
+    {% if compliance %}
+    <div class="section compliance-section">
+        <h2>Compliance & Governance</h2>
+        
+        {% if not compliance.has_violations %}
+        <!-- No Violations - Compliant Badge -->
+        <div class="compliant-badge">
+            <h3 style="color: #28a745; text-align: center; margin-bottom: 10px;">✓ CERTIFIED COMPLIANT</h3>
+            <p style="text-align: center; color: #6c757d; margin-bottom: 20px;">
+                This scan has passed all policy checks with no violations detected.
+            </p>
+            <div class="compliant-box">
+                All quality and governance policies have been satisfied.
+            </div>
+        </div>
+        {% else %}
+        <!-- Violations Found -->
+        <div class="violations-summary">
+            <p style="color: #dc3545; font-weight: bold; font-size: 14px; margin-bottom: 15px;">
+                {{ compliance.total_violations }} Policy Violation(s) Detected: 
+                {{ compliance.critical_count }} Critical, {{ compliance.warning_count }} Warning(s)
+            </p>
+        </div>
+
+        <table class="violations-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Severity</th>
+                    <th style="width: 30%;">Policy Name</th>
+                    <th style="width: 55%;">Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for violation in compliance.violations %}
+                <tr class="{% if violation.is_critical %}violation-critical{% else %}violation-warning{% endif %}">
+                    <td><strong>{{ violation.severity }}</strong></td>
+                    <td>{{ violation.policy_name }}</td>
+                    <td>{{ violation.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Issues Summary -->
+    {% if issues %}
+    <div class="section">
+        <h2>Issues Summary</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Severity</th>
+                    <th>Rule Name</th>
+                    <th>Column</th>
+                    <th>Affected Rows</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for issue in issues %}
+                <tr>
+                    <td><span class="severity-badge severity-{{ issue.severity }}">{{ issue.severity|upper }}</span></td>
+                    <td>{{ issue.rule_name }}</td>
+                    <td>{{ issue.column_name }}</td>
+                    <td>{{ issue.affected_rows }}</td>
+                    <td><span class="status-badge status-{{ issue.status }}">{{ issue.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Remediation Plan -->
+    {% if remediation_plan %}
+    <div class="section">
+        <h2>Remediation Plan</h2>
+        {% for plan in remediation_plan %}
+        <div class="remediation-card">
+            <h3>{{ plan.summary }}</h3>
+            <p><strong>Impact:</strong> {{ plan.impact }} | <strong>Effort:</strong> {{ plan.effort }}</p>
+            <pre class="code-block">{{ plan.suggested_fix }}</pre>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2026 DHCaaS - Data Health Check as a Service</p>
+        <p>Report generated on {{ scan_date }}</p>
+    </div>
+</body>
+</html>

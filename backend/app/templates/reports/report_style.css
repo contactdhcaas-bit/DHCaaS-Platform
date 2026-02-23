@@ -1,0 +1,336 @@
+/* ============================================
+   DHCaaS PDF Report Styles - xhtml2pdf Compatible
+   NO CSS Variables, NO Pseudo-elements, NO Advanced Features
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #333;
+    background-color: #ffffff;
+    padding: 20px;
+}
+
+/* Header Styles */
+.header {
+    padding-bottom: 20px;
+    border-bottom: 3px solid #2c3e50;
+    margin-bottom: 30px;
+}
+
+.logo h1 {
+    font-size: 32px;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.logo .tagline {
+    font-size: 11px;
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+.report-info {
+    text-align: right;
+    font-size: 11px;
+    color: #555;
+    margin-top: 10px;
+}
+
+.report-info p {
+    margin-bottom: 5px;
+}
+
+/* Section Styles */
+.section {
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-left: 4px solid #3498db;
+}
+
+.section h2 {
+    font-size: 18px;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #ecf0f1;
+}
+
+/* Smart Score Card */
+.smart-score-card {
+    padding: 20px;
+    background-color: #667eea;
+    color: white;
+    margin-bottom: 15px;
+}
+
+.score-display {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.score-number {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.score-grade {
+    font-size: 16px;
+    font-weight: bold;
+    padding: 5px 15px;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.score-grade.grade-A { background-color: #27ae60; }
+.score-grade.grade-B { background-color: #f39c12; }
+.score-grade.grade-C { background-color: #e74c3c; }
+
+.score-details p {
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.summary-text {
+    font-size: 13px;
+    line-height: 1.8;
+    color: #555;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    margin-bottom: 15px;
+}
+
+.metric-card {
+    background-color: #ffffff;
+    padding: 15px;
+    margin-bottom: 10px;
+    text-align: center;
+    border: 2px solid #ecf0f1;
+}
+
+.metric-card h3 {
+    font-size: 24px;
+    color: #3498db;
+    margin-bottom: 8px;
+}
+
+.metric-card p {
+    font-size: 12px;
+    color: #7f8c8d;
+    font-weight: bold;
+}
+
+.metric-card.critical h3 { color: #e74c3c; }
+.metric-card.success h3 { color: #27ae60; }
+
+/* Findings List */
+.findings-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.findings-list li {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #ffffff;
+    border-left: 4px solid #3498db;
+    font-size: 12px;
+}
+
+/* Data Tables */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background-color: #ffffff;
+}
+
+.data-table th {
+    background-color: #34495e;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: bold;
+    border: 1px solid #2c3e50;
+}
+
+.data-table td {
+    padding: 10px 12px;
+    border: 1px solid #ecf0f1;
+    font-size: 11px;
+    color: #555;
+}
+
+.data-table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-excellent { background-color: #d4edda; color: #155724; }
+.status-good { background-color: #d1ecf1; color: #0c5460; }
+.status-fair { background-color: #fff3cd; color: #856404; }
+.status-poor { background-color: #f8d7da; color: #721c24; }
+
+.status-open { background-color: #f8d7da; color: #721c24; }
+.status-acknowledged { background-color: #fff3cd; color: #856404; }
+.status-resolved { background-color: #d4edda; color: #155724; }
+
+/* Severity Badges */
+.severity-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.severity-critical { background-color: #e74c3c; color: white; }
+.severity-high { background-color: #e67e22; color: white; }
+.severity-medium { background-color: #f39c12; color: white; }
+.severity-low { background-color: #3498db; color: white; }
+
+/* Remediation Cards */
+.remediation-card {
+    background-color: #ffffff;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid #27ae60;
+}
+
+.remediation-card h3 {
+    font-size: 14px;
+    color: #27ae60;
+    margin-bottom: 10px;
+}
+
+.remediation-card p {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.code-block {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    white-space: pre-wrap;
+}
+
+/* ============================================
+   Compliance & Governance Section Styles
+   ============================================ */
+
+.compliance-section {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-left: 4px solid #6c757d;
+}
+
+/* Compliant Badge (No Violations) */
+.compliant-badge {
+    padding: 20px;
+    text-align: center;
+}
+
+.compliant-box {
+    background-color: #d4edda;
+    border: 2px solid #28a745;
+    padding: 20px;
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 13px;
+    text-align: center;
+    color: #155724;
+}
+
+/* Violations Summary */
+.violations-summary {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+/* Violations Table */
+.violations-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: white;
+}
+
+.violations-table thead {
+    background-color: #343a40;
+    color: white;
+}
+
+.violations-table th {
+    padding: 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: bold;
+    border: 1px solid #dee2e6;
+}
+
+.violations-table td {
+    padding: 12px;
+    font-size: 11px;
+    border: 1px solid #dee2e6;
+    vertical-align: top;
+}
+
+/* Critical Violation Row */
+.violation-critical {
+    background-color: #f8d7da;
+}
+
+.violation-critical td:first-child {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Warning Violation Row */
+.violation-warning {
+    background-color: #fff3cd;
+}
+
+.violation-warning td:first-child {
+    color: #cc9900;
+    font-weight: bold;
+}
+
+/* Footer */
+.footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #ecf0f1;
+    text-align: center;
+    font-size: 10px;
+    color: #7f8c8d;
+}
+
+.footer p {
+    margin-bottom: 5px;
+}

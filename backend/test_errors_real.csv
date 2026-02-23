@@ -1,0 +1,5 @@
+﻿id,name,email,age,city
+1,John Doe,john@test.com,25,NYC
+2,,invalid-email,30,LA
+3,Jane,jane@test.com,-5,Chicago
+1,Duplicate,dup@test.com,40,Boston

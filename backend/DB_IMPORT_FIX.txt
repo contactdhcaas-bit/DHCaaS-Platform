@@ -1,0 +1,10 @@
+﻿# Replace the import line in app/api/v1/endpoints/lineage.py:
+# Common patterns:
+# Option 1: if you have app.core.db
+from app.core.db import get_db
+
+# Option 2: if you have app.db.dependencies  
+from app.db.dependencies import get_db
+
+# Option 3: if it's app.core.database
+from app.core.database import get_db

@@ -1,0 +1,1734 @@
+{
+  "jobs": [
+    {
+      "job_id": "fd134e96-8871-4d62-bb64-0a6700ae1351",
+      "source_type": "csv",
+      "source_config": {
+        "delimiter": ",",
+        "filepath": "test_data/sample_customers.csv"
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "fd134e96-8871-4d62-bb64-0a6700ae1351",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 8,
+          "total_columns": 7,
+          "completeness_score": 92.86,
+          "null_counts": {
+            "id": 0,
+            "name": 0,
+            "email": 1,
+            "phone": 1,
+            "age": 0,
+            "salary": 1,
+            "ssn": 1
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "id": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "min": 1.0,
+              "max": 8.0,
+              "mean": 4.5,
+              "median": 4.5,
+              "std_dev": 2.45
+            },
+            "name": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "bob@test.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "+1-555-777-8888",
+              "most_common_count": 1
+            },
+            "age": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "min": 28.0,
+              "max": 40.0,
+              "mean": 33.12,
+              "median": 32.5,
+              "std_dev": 4.29
+            },
+            "salary": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "min": 50000.0,
+              "max": 75000.0,
+              "mean": 58857.14,
+              "median": 58000.0,
+              "std_dev": 8295.15
+            },
+            "ssn": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "123-45-6789",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "age": "numeric",
+            "salary": "numeric",
+            "ssn": "text"
+          },
+          "scan_timestamp": "2026-02-05T17:24:31.127532"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "phone",
+            "pii_type": "phone",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Mask phone numbers (e.g., XXX-XXX-1234). Restrict access."
+          },
+          {
+            "column_name": "ssn",
+            "pii_type": "ssn",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Remove or encrypt SSN immediately. Violates PII regulations."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 3 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.03
+      },
+      "error_message": null,
+      "created_at": "2026-02-05T17:24:30.949476",
+      "updated_at": "2026-02-05T17:24:31.153534",
+      "completed_at": "2026-02-05T17:24:31.153534"
+    },
+    {
+      "job_id": "41ab85c2-8c41-4b82-93f6-f497d90892e4",
+      "source_type": "csv",
+      "source_config": {
+        "delimiter": ",",
+        "filepath": "test_data/sample_customers.csv"
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "41ab85c2-8c41-4b82-93f6-f497d90892e4",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 8,
+          "total_columns": 7,
+          "completeness_score": 92.86,
+          "null_counts": {
+            "id": 0,
+            "name": 0,
+            "email": 1,
+            "phone": 1,
+            "age": 0,
+            "salary": 1,
+            "ssn": 1
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "id": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "min": 1.0,
+              "max": 8.0,
+              "mean": 4.5,
+              "median": 4.5,
+              "std_dev": 2.45
+            },
+            "name": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "bob@test.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "+1-555-777-8888",
+              "most_common_count": 1
+            },
+            "age": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "min": 28.0,
+              "max": 40.0,
+              "mean": 33.12,
+              "median": 32.5,
+              "std_dev": 4.29
+            },
+            "salary": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "min": 50000.0,
+              "max": 75000.0,
+              "mean": 58857.14,
+              "median": 58000.0,
+              "std_dev": 8295.15
+            },
+            "ssn": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "123-45-6789",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "age": "numeric",
+            "salary": "numeric",
+            "ssn": "text"
+          },
+          "scan_timestamp": "2026-02-05T19:02:32.357555"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "phone",
+            "pii_type": "phone",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Mask phone numbers (e.g., XXX-XXX-1234). Restrict access."
+          },
+          {
+            "column_name": "ssn",
+            "pii_type": "ssn",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Remove or encrypt SSN immediately. Violates PII regulations."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 3 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.15
+      },
+      "error_message": null,
+      "created_at": "2026-02-05T19:02:31.768863",
+      "updated_at": "2026-02-05T19:02:32.416632",
+      "completed_at": "2026-02-05T19:02:32.416632"
+    },
+    {
+      "job_id": "f9af15ba-cbd3-4f1b-90a0-633ff58cc46f",
+      "source_type": "csv",
+      "source_config": {
+        "delimiter": ",",
+        "filepath": "test_data/sample_customers.csv"
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "f9af15ba-cbd3-4f1b-90a0-633ff58cc46f",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 8,
+          "total_columns": 7,
+          "completeness_score": 92.86,
+          "null_counts": {
+            "id": 0,
+            "name": 0,
+            "email": 1,
+            "phone": 1,
+            "age": 0,
+            "salary": 1,
+            "ssn": 1
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "id": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "min": 1.0,
+              "max": 8.0,
+              "mean": 4.5,
+              "median": 4.5,
+              "std_dev": 2.45
+            },
+            "name": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "bob@test.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "+1-555-777-8888",
+              "most_common_count": 1
+            },
+            "age": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "min": 28.0,
+              "max": 40.0,
+              "mean": 33.12,
+              "median": 32.5,
+              "std_dev": 4.29
+            },
+            "salary": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "min": 50000.0,
+              "max": 75000.0,
+              "mean": 58857.14,
+              "median": 58000.0,
+              "std_dev": 8295.15
+            },
+            "ssn": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "123-45-6789",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "age": "numeric",
+            "salary": "numeric",
+            "ssn": "text"
+          },
+          "scan_timestamp": "2026-02-06T16:58:09.238430"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "phone",
+            "pii_type": "phone",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Mask phone numbers (e.g., XXX-XXX-1234). Restrict access."
+          },
+          {
+            "column_name": "ssn",
+            "pii_type": "ssn",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Remove or encrypt SSN immediately. Violates PII regulations."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 3 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.06
+      },
+      "error_message": null,
+      "created_at": "2026-02-06T16:58:08.451520",
+      "updated_at": "2026-02-06T16:58:09.283686",
+      "completed_at": "2026-02-06T16:58:09.283686"
+    },
+    {
+      "job_id": "391622c9-67b1-42dc-8097-4947879400ae",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "demo.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "failed",
+      "results": null,
+      "error_message": "FileNotFoundError: CSV file not found: CSV file not found: demo.csv",
+      "created_at": "2026-02-06T17:16:03.475103",
+      "updated_at": "2026-02-06T17:16:03.812177",
+      "completed_at": "2026-02-06T17:16:03.812177"
+    },
+    {
+      "job_id": "86c1974a-f94a-4cf0-aed9-8c1057e104cd",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "demo.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "failed",
+      "results": null,
+      "error_message": "FileNotFoundError: CSV file not found: CSV file not found: demo.csv",
+      "created_at": "2026-02-06T17:16:10.069078",
+      "updated_at": "2026-02-06T17:16:10.210269",
+      "completed_at": "2026-02-06T17:16:10.210269"
+    },
+    {
+      "job_id": "9871a712-6d43-4388-8d79-decfac7157ba",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "demo.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "failed",
+      "results": null,
+      "error_message": "FileNotFoundError: CSV file not found: CSV file not found: demo.csv",
+      "created_at": "2026-02-06T17:17:13.702584",
+      "updated_at": "2026-02-06T17:17:13.787701",
+      "completed_at": "2026-02-06T17:17:13.787701"
+    },
+    {
+      "job_id": "b8f7dd6a-4ae0-44bc-ab93-ae4e81d0bb62",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "test_data/sample_customers.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "b8f7dd6a-4ae0-44bc-ab93-ae4e81d0bb62",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 8,
+          "total_columns": 7,
+          "completeness_score": 92.86,
+          "null_counts": {
+            "id": 0,
+            "name": 0,
+            "email": 1,
+            "phone": 1,
+            "age": 0,
+            "salary": 1,
+            "ssn": 1
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "id": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "min": 1.0,
+              "max": 8.0,
+              "mean": 4.5,
+              "median": 4.5,
+              "std_dev": 2.45
+            },
+            "name": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "bob@test.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "+1-555-777-8888",
+              "most_common_count": 1
+            },
+            "age": {
+              "count": 8,
+              "null_count": 0,
+              "unique_count": 8,
+              "min": 28.0,
+              "max": 40.0,
+              "mean": 33.12,
+              "median": 32.5,
+              "std_dev": 4.29
+            },
+            "salary": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "min": 50000.0,
+              "max": 75000.0,
+              "mean": 58857.14,
+              "median": 58000.0,
+              "std_dev": 8295.15
+            },
+            "ssn": {
+              "count": 7,
+              "null_count": 1,
+              "unique_count": 7,
+              "most_common": "123-45-6789",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "age": "numeric",
+            "salary": "numeric",
+            "ssn": "text"
+          },
+          "scan_timestamp": "2026-02-06T17:25:19.099227"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "phone",
+            "pii_type": "phone",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Mask phone numbers (e.g., XXX-XXX-1234). Restrict access."
+          },
+          {
+            "column_name": "ssn",
+            "pii_type": "ssn",
+            "confidence": 1.0,
+            "sample_count": 7,
+            "total_count": 7,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Remove or encrypt SSN immediately. Violates PII regulations."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 3 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.1
+      },
+      "error_message": null,
+      "created_at": "2026-02-06T17:25:18.593862",
+      "updated_at": "2026-02-06T17:25:19.159251",
+      "completed_at": "2026-02-06T17:25:19.159251"
+    },
+    {
+      "job_id": "4ec01e55-40ac-4248-b5a2-053352d1d5ed",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "demo.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "failed",
+      "results": null,
+      "error_message": "FileNotFoundError: CSV file not found: CSV file not found: demo.csv",
+      "created_at": "2026-02-06T17:30:06.487030",
+      "updated_at": "2026-02-06T17:30:06.596061",
+      "completed_at": "2026-02-06T17:30:06.596061"
+    },
+    {
+      "job_id": "01cef166-9a8f-4eea-aa1f-e8fd2f1dfffd",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "demo.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "failed",
+      "results": null,
+      "error_message": "FileNotFoundError: CSV file not found: CSV file not found: demo.csv",
+      "created_at": "2026-02-06T17:30:13.247776",
+      "updated_at": "2026-02-06T17:30:13.331501",
+      "completed_at": "2026-02-06T17:30:13.331501"
+    },
+    {
+      "job_id": "6d626705-c1d3-46a1-8589-78375ab0c1c7",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "demo.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "failed",
+      "results": null,
+      "error_message": "FileNotFoundError: CSV file not found: CSV file not found: demo.csv",
+      "created_at": "2026-02-06T17:32:52.938464",
+      "updated_at": "2026-02-06T17:32:53.101614",
+      "completed_at": "2026-02-06T17:32:53.101614"
+    },
+    {
+      "job_id": "44ec0954-e221-4eca-80bc-8bb5907325a6",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "demo.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "failed",
+      "results": null,
+      "error_message": "FileNotFoundError: CSV file not found: CSV file not found: demo.csv",
+      "created_at": "2026-02-06T17:32:59.228827",
+      "updated_at": "2026-02-06T17:32:59.323335",
+      "completed_at": "2026-02-06T17:32:59.323335"
+    },
+    {
+      "job_id": "297aeb55-ebef-416b-b5ac-4227b9604a82",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "demo.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "failed",
+      "results": null,
+      "error_message": "FileNotFoundError: CSV file not found: CSV file not found: demo.csv",
+      "created_at": "2026-02-06T17:33:02.250054",
+      "updated_at": "2026-02-06T17:33:02.397346",
+      "completed_at": "2026-02-06T17:33:02.397346"
+    },
+    {
+      "job_id": "77b86573-5cda-43fd-8784-6eaa453fce86",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "demo.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "failed",
+      "results": null,
+      "error_message": "FileNotFoundError: CSV file not found: CSV file not found: demo.csv",
+      "created_at": "2026-02-06T17:35:51.677234",
+      "updated_at": "2026-02-06T17:35:51.800457",
+      "completed_at": "2026-02-06T17:35:51.800457"
+    },
+    {
+      "job_id": "baf0b911-d1bc-4f0e-a067-56a24f5364a5",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "demo.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "failed",
+      "results": null,
+      "error_message": "FileNotFoundError: CSV file not found: CSV file not found: demo.csv",
+      "created_at": "2026-02-06T17:35:58.129186",
+      "updated_at": "2026-02-06T17:35:58.211675",
+      "completed_at": "2026-02-06T17:35:58.211675"
+    },
+    {
+      "job_id": "81571e36-ff60-48dd-a21d-6def1c9030de",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "test_data/sample_customers.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "81571e36-ff60-48dd-a21d-6def1c9030de",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 10,
+          "total_columns": 6,
+          "completeness_score": 100.0,
+          "null_counts": {
+            "customer_id": 0,
+            "name": 0,
+            "email": 0,
+            "phone": 0,
+            "address": 0,
+            "credit_card": 0
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "customer_id": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "min": 1.0,
+              "max": 10.0,
+              "mean": 5.5,
+              "median": 5.5,
+              "std_dev": 3.03
+            },
+            "name": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "alice.w@email.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "555-0123",
+              "most_common_count": 1
+            },
+            "address": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "123 Main St",
+              "most_common_count": 1
+            },
+            "credit_card": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "3530-4444-5555-6666",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "customer_id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "address": "text",
+            "credit_card": "text"
+          },
+          "scan_timestamp": "2026-02-06T17:41:55.912776"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "credit_card",
+            "pii_type": "credit_card",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Encrypt credit card data. Ensure PCI-DSS compliance."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 2 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.06
+      },
+      "error_message": null,
+      "created_at": "2026-02-06T17:41:55.722833",
+      "updated_at": "2026-02-06T17:41:55.932997",
+      "completed_at": "2026-02-06T17:41:55.932997"
+    },
+    {
+      "job_id": "76a6f565-9644-4967-acbf-b5232b7f09bc",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "test_data/sample_customers.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "76a6f565-9644-4967-acbf-b5232b7f09bc",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 10,
+          "total_columns": 6,
+          "completeness_score": 100.0,
+          "null_counts": {
+            "customer_id": 0,
+            "name": 0,
+            "email": 0,
+            "phone": 0,
+            "address": 0,
+            "credit_card": 0
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "customer_id": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "min": 1.0,
+              "max": 10.0,
+              "mean": 5.5,
+              "median": 5.5,
+              "std_dev": 3.03
+            },
+            "name": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "alice.w@email.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "555-0123",
+              "most_common_count": 1
+            },
+            "address": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "123 Main St",
+              "most_common_count": 1
+            },
+            "credit_card": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "3530-4444-5555-6666",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "customer_id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "address": "text",
+            "credit_card": "text"
+          },
+          "scan_timestamp": "2026-02-06T17:42:01.748572"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "credit_card",
+            "pii_type": "credit_card",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Encrypt credit card data. Ensure PCI-DSS compliance."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 2 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.09
+      },
+      "error_message": null,
+      "created_at": "2026-02-06T17:42:01.674759",
+      "updated_at": "2026-02-06T17:42:01.823321",
+      "completed_at": "2026-02-06T17:42:01.823321"
+    },
+    {
+      "job_id": "57327c01-42f5-488b-9ab4-06b2ed26efcc",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "test_data/sample_customers.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "57327c01-42f5-488b-9ab4-06b2ed26efcc",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 10,
+          "total_columns": 6,
+          "completeness_score": 100.0,
+          "null_counts": {
+            "customer_id": 0,
+            "name": 0,
+            "email": 0,
+            "phone": 0,
+            "address": 0,
+            "credit_card": 0
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "customer_id": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "min": 1.0,
+              "max": 10.0,
+              "mean": 5.5,
+              "median": 5.5,
+              "std_dev": 3.03
+            },
+            "name": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "alice.w@email.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "555-0123",
+              "most_common_count": 1
+            },
+            "address": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "123 Main St",
+              "most_common_count": 1
+            },
+            "credit_card": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "3530-4444-5555-6666",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "customer_id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "address": "text",
+            "credit_card": "text"
+          },
+          "scan_timestamp": "2026-02-06T17:42:32.951727"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "credit_card",
+            "pii_type": "credit_card",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Encrypt credit card data. Ensure PCI-DSS compliance."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 2 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.04
+      },
+      "error_message": null,
+      "created_at": "2026-02-06T17:42:32.870244",
+      "updated_at": "2026-02-06T17:42:32.981354",
+      "completed_at": "2026-02-06T17:42:32.981354"
+    },
+    {
+      "job_id": "32475f77-8025-4519-88a1-edd3c1641b57",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "test_data/sample_customers.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "32475f77-8025-4519-88a1-edd3c1641b57",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 10,
+          "total_columns": 6,
+          "completeness_score": 100.0,
+          "null_counts": {
+            "customer_id": 0,
+            "name": 0,
+            "email": 0,
+            "phone": 0,
+            "address": 0,
+            "credit_card": 0
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "customer_id": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "min": 1.0,
+              "max": 10.0,
+              "mean": 5.5,
+              "median": 5.5,
+              "std_dev": 3.03
+            },
+            "name": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "alice.w@email.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "555-0123",
+              "most_common_count": 1
+            },
+            "address": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "123 Main St",
+              "most_common_count": 1
+            },
+            "credit_card": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "3530-4444-5555-6666",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "customer_id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "address": "text",
+            "credit_card": "text"
+          },
+          "scan_timestamp": "2026-02-06T17:49:12.389449"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "credit_card",
+            "pii_type": "credit_card",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Encrypt credit card data. Ensure PCI-DSS compliance."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 2 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.08
+      },
+      "error_message": null,
+      "created_at": "2026-02-06T17:49:12.275659",
+      "updated_at": "2026-02-06T17:49:12.453106",
+      "completed_at": "2026-02-06T17:49:12.453106"
+    },
+    {
+      "job_id": "6c5ba2fa-45ef-40e3-b027-c242d0b5c858",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "test_data/sample_customers.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "6c5ba2fa-45ef-40e3-b027-c242d0b5c858",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 10,
+          "total_columns": 6,
+          "completeness_score": 100.0,
+          "null_counts": {
+            "customer_id": 0,
+            "name": 0,
+            "email": 0,
+            "phone": 0,
+            "address": 0,
+            "credit_card": 0
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "customer_id": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "min": 1.0,
+              "max": 10.0,
+              "mean": 5.5,
+              "median": 5.5,
+              "std_dev": 3.03
+            },
+            "name": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "alice.w@email.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "555-0123",
+              "most_common_count": 1
+            },
+            "address": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "123 Main St",
+              "most_common_count": 1
+            },
+            "credit_card": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "3530-4444-5555-6666",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "customer_id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "address": "text",
+            "credit_card": "text"
+          },
+          "scan_timestamp": "2026-02-06T17:52:36.771625"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "credit_card",
+            "pii_type": "credit_card",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Encrypt credit card data. Ensure PCI-DSS compliance."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 2 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.05
+      },
+      "error_message": null,
+      "created_at": "2026-02-06T17:52:36.640643",
+      "updated_at": "2026-02-06T17:52:36.821725",
+      "completed_at": "2026-02-06T17:52:36.821725"
+    },
+    {
+      "job_id": "f4266749-3375-4668-966f-b2234c032ad9",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "test_data/sample_customers.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "f4266749-3375-4668-966f-b2234c032ad9",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 10,
+          "total_columns": 6,
+          "completeness_score": 100.0,
+          "null_counts": {
+            "customer_id": 0,
+            "name": 0,
+            "email": 0,
+            "phone": 0,
+            "address": 0,
+            "credit_card": 0
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "customer_id": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "min": 1.0,
+              "max": 10.0,
+              "mean": 5.5,
+              "median": 5.5,
+              "std_dev": 3.03
+            },
+            "name": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "alice.w@email.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "555-0123",
+              "most_common_count": 1
+            },
+            "address": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "123 Main St",
+              "most_common_count": 1
+            },
+            "credit_card": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "3530-4444-5555-6666",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "customer_id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "address": "text",
+            "credit_card": "text"
+          },
+          "scan_timestamp": "2026-02-06T18:00:27.685870"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "credit_card",
+            "pii_type": "credit_card",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Encrypt credit card data. Ensure PCI-DSS compliance."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 2 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.11
+      },
+      "error_message": null,
+      "created_at": "2026-02-06T18:00:27.585630",
+      "updated_at": "2026-02-06T18:00:27.783487",
+      "completed_at": "2026-02-06T18:00:27.783487"
+    },
+    {
+      "job_id": "84094508-de54-4477-a1d8-37642ce27d49",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "test_data/sample_customers.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "84094508-de54-4477-a1d8-37642ce27d49",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 10,
+          "total_columns": 6,
+          "completeness_score": 100.0,
+          "null_counts": {
+            "customer_id": 0,
+            "name": 0,
+            "email": 0,
+            "phone": 0,
+            "address": 0,
+            "credit_card": 0
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "customer_id": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "min": 1.0,
+              "max": 10.0,
+              "mean": 5.5,
+              "median": 5.5,
+              "std_dev": 3.03
+            },
+            "name": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "alice.w@email.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "555-0123",
+              "most_common_count": 1
+            },
+            "address": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "123 Main St",
+              "most_common_count": 1
+            },
+            "credit_card": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "3530-4444-5555-6666",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "customer_id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "address": "text",
+            "credit_card": "text"
+          },
+          "scan_timestamp": "2026-02-06T18:39:21.035194"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "credit_card",
+            "pii_type": "credit_card",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Encrypt credit card data. Ensure PCI-DSS compliance."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 2 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.03
+      },
+      "error_message": null,
+      "created_at": "2026-02-06T18:39:20.884917",
+      "updated_at": "2026-02-06T18:39:21.046185",
+      "completed_at": "2026-02-06T18:39:21.046185"
+    },
+    {
+      "job_id": "ad078207-ef83-41e5-8d32-0d351b3e4c60",
+      "source_type": "csv",
+      "source_config": {
+        "filepath": "test_data/sample_customers.csv",
+        "delimiter": ","
+      },
+      "scan_options": {
+        "include_quality": true,
+        "include_pii": true,
+        "sample_size": null
+      },
+      "status": "completed",
+      "results": {
+        "source_id": "ad078207-ef83-41e5-8d32-0d351b3e4c60",
+        "source_type": "csv",
+        "quality_metrics": {
+          "total_rows": 10,
+          "total_columns": 6,
+          "completeness_score": 100.0,
+          "null_counts": {
+            "customer_id": 0,
+            "name": 0,
+            "email": 0,
+            "phone": 0,
+            "address": 0,
+            "credit_card": 0
+          },
+          "duplicate_count": 0,
+          "duplicate_percentage": 0.0,
+          "column_statistics": {
+            "customer_id": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "min": 1.0,
+              "max": 10.0,
+              "mean": 5.5,
+              "median": 5.5,
+              "std_dev": 3.03
+            },
+            "name": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "Alice Williams",
+              "most_common_count": 1
+            },
+            "email": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "alice.w@email.com",
+              "most_common_count": 1
+            },
+            "phone": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "555-0123",
+              "most_common_count": 1
+            },
+            "address": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "123 Main St",
+              "most_common_count": 1
+            },
+            "credit_card": {
+              "count": 10,
+              "null_count": 0,
+              "unique_count": 10,
+              "most_common": "3530-4444-5555-6666",
+              "most_common_count": 1
+            }
+          },
+          "data_types": {
+            "customer_id": "numeric",
+            "name": "text",
+            "email": "text",
+            "phone": "text",
+            "address": "text",
+            "credit_card": "text"
+          },
+          "scan_timestamp": "2026-02-06T18:39:21.201008"
+        },
+        "pii_detections": [
+          {
+            "column_name": "email",
+            "pii_type": "email",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "Encrypt or mask email addresses. Apply GDPR compliance measures."
+          },
+          {
+            "column_name": "credit_card",
+            "pii_type": "credit_card",
+            "confidence": 1.0,
+            "sample_count": 10,
+            "total_count": 10,
+            "match_percentage": 100.0,
+            "severity": "critical",
+            "recommendation": "CRITICAL: Encrypt credit card data. Ensure PCI-DSS compliance."
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "Found PII in 2 column(s). Review security measures."
+        ],
+        "scan_duration_seconds": 0.05
+      },
+      "error_message": null,
+      "created_at": "2026-02-06T18:39:20.948635",
+      "updated_at": "2026-02-06T18:39:21.256564",
+      "completed_at": "2026-02-06T18:39:21.256564"
+    }
+  ]
+}

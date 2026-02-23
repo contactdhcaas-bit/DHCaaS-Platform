@@ -1,0 +1,162 @@
+"""
+Data Governance Policy Models
+Pydantic schemas for policy management and evaluation
+"""
+
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+from enum import Enum
+
+
+class PolicyRuleType(str, Enum):
+    """Types of policy rules"""
+    MIN_QUALITY_SCORE = "min_quality_score"
+    MAX_PII_ROWS = "max_pii_rows"
+    FORBIDDEN_COLUMNS = "forbidden_columns"
+    MAX_DUPLICATES = "max_duplicates"
+    MAX_MISSING_PERCENTAGE = "max_missing_percentage"
+    REQUIRE_ENCRYPTION = "require_encryption"
+
+
+class PolicySeverity(str, Enum):
+    """Severity levels for policy violations"""
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    WARNING = "warning"
+    INFO = "info"
+
+
+class PolicyStatus(str, Enum):
+    """Policy status"""
+    ENABLED = "enabled"
+    DISABLED = "disabled"
+    DRAFT = "draft"
+
+
+class PolicyCreate(BaseModel):
+    """Request model for creating a policy"""
+    name: str = Field(..., min_length=3, max_length=200, description="Policy name")
+    description: Optional[str] = Field(None, max_length=1000, description="Policy description")
+    rule_type: PolicyRuleType = Field(..., description="Type of rule to enforce")
+    threshold: float = Field(..., ge=0, description="Threshold value for the rule")
+    enabled: bool = Field(True, description="Whether policy is active")
+    severity: PolicySeverity = Field(PolicySeverity.MEDIUM, description="Violation severity")
+    tags: Optional[List[str]] = Field(default=[], description="Tags for categorization")
+    target_tables: Optional[List[str]] = Field(default=[], description="Specific tables to apply policy (empty = all)")
+
+
+class PolicyUpdate(BaseModel):
+    """Request model for updating a policy"""
+    name: Optional[str] = Field(None, min_length=3, max_length=200)
+    description: Optional[str] = Field(None, max_length=1000)
+    rule_type: Optional[PolicyRuleType] = None
+    threshold: Optional[float] = Field(None, ge=0)
+    enabled: Optional[bool] = None
+    severity: Optional[PolicySeverity] = None
+    status: Optional[PolicyStatus] = None
+    tags: Optional[List[str]] = None
+    target_tables: Optional[List[str]] = None
+
+
+class Policy(BaseModel):
+    """Complete policy model"""
+    id: str = Field(..., description="Unique policy ID")
+    name: str
+    description: Optional[str] = None
+    rule_type: PolicyRuleType
+    threshold: float
+    enabled: bool = True
+    severity: PolicySeverity
+    status: PolicyStatus = PolicyStatus.ENABLED
+    tags: List[str] = []
+    target_tables: List[str] = []
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[str] = None
+    violation_count: int = 0
+    last_violation: Optional[datetime] = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": "policy_123",
+                "name": "High Quality for PII Tables",
+                "description": "Ensure tables with PII maintain quality score above 85%",
+                "rule_type": "min_quality_score",
+                "threshold": 85.0,
+                "enabled": True,
+                "severity": "critical",
+                "status": "enabled",
+                "tags": ["pii", "quality"],
+                "target_tables": [],
+                "created_at": "2026-02-13T14:00:00Z",
+                "updated_at": "2026-02-13T14:00:00Z",
+                "violation_count": 0
+            }
+        }
+
+
+class Violation(BaseModel):
+    """Policy violation model"""
+    id: str = Field(..., description="Unique violation ID")
+    policy_id: str = Field(..., description="Policy that was violated")
+    policy_name: str = Field(..., description="Name of violated policy")
+    scan_id: str = Field(..., description="Scan that triggered violation")
+    table_name: Optional[str] = None
+    message: str = Field(..., description="Human-readable violation message")
+    severity: PolicySeverity
+    rule_type: PolicyRuleType
+    threshold: float
+    actual_value: float
+    violation_percentage: float = Field(..., description="How much the threshold was exceeded")
+    detected_at: datetime
+    resolved: bool = False
+    resolved_at: Optional[datetime] = None
+    resolved_by: Optional[str] = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": "violation_456",
+                "policy_id": "policy_123",
+                "policy_name": "High Quality for PII Tables",
+                "scan_id": "scan_789",
+                "table_name": "customers",
+                "message": "Quality score 78.5% is below required threshold of 85.0%",
+                "severity": "critical",
+                "rule_type": "min_quality_score",
+                "threshold": 85.0,
+                "actual_value": 78.5,
+                "violation_percentage": 7.65,
+                "detected_at": "2026-02-13T14:30:00Z",
+                "resolved": False
+            }
+        }
+
+
+class EvaluationResult(BaseModel):
+    """Result of policy evaluation"""
+    scan_id: str
+    table_name: Optional[str] = None
+    evaluated_at: datetime
+    total_policies: int
+    policies_passed: int
+    policies_failed: int
+    violations: List[Violation]
+    overall_status: str = Field(..., description="pass, warning, or critical")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "scan_id": "scan_789",
+                "table_name": "customers",
+                "evaluated_at": "2026-02-13T14:30:00Z",
+                "total_policies": 5,
+                "policies_passed": 3,
+                "policies_failed": 2,
+                "violations": [],
+                "overall_status": "critical"
+            }
+        }

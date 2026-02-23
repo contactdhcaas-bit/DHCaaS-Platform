@@ -1,0 +1,6 @@
+﻿customer_id,customer_email,order_amount,city,phone_number,created_at,status
+1001,john@example.com,150.50,New York,+1234567890,2024-01-01,Active
+1002,alice@test.com,200.00,London,+4412345678,2024-01-02,Active
+1003,invalid-email,250.75,Paris,123456,2024-01-03,Pending
+1004,bob@company.com,300.00,Berlin,+4912345678,2024-01-04,Active
+1005,duplicate@test.com,100.00,Madrid,,2024-01-05,Inactive

@@ -1,0 +1,248 @@
+{
+  "scan_eeee48850ca8": {
+    "job_id": "scan_eeee48850ca8",
+    "source_id": "test",
+    "source_name": "DataSource_test",
+    "status": "completed",
+    "progress": 100,
+    "started_at": "2026-02-04T17:03:41.308814+00:00",
+    "completed_at": "2026-02-04T17:03:41.308814+00:00",
+    "metadata": {
+      "connection_id": "conn_001",
+      "table_count": 5,
+      "estimated_rows": 10000,
+      "processing_type": "full",
+      "filters": {},
+      "configuration": {}
+    },
+    "quality_metrics": {
+      "completeness": 95.5,
+      "validity": 88.2,
+      "consistency": 91.7,
+      "accuracy": 94.3,
+      "uniqueness": 97.3,
+      "timeliness": 89.1,
+      "overall_score": 92.8
+    },
+    "compliance": {
+      "gdpr_compliant": true,
+      "pii_fields_detected": [],
+      "encryption_status": "encrypted",
+      "retention_policy_met": true,
+      "risk_level": "low",
+      "ccpa_compliant": null,
+      "hipaa_compliant": true,
+      "recommendations": []
+    },
+    "predictive": null,
+    "issues_found": 142,
+    "total_records_scanned": 10000,
+    "error_message": null,
+    "duration_seconds": 45.2
+  },
+  "scan_f26e816f686a": {
+    "job_id": "scan_f26e816f686a",
+    "source_id": "production_db",
+    "source_name": "DataSource_production_db",
+    "status": "completed",
+    "progress": 100,
+    "started_at": "2026-02-04T17:04:38.667791+00:00",
+    "completed_at": "2026-02-04T17:04:38.667791+00:00",
+    "metadata": {
+      "connection_id": "conn_001",
+      "table_count": 5,
+      "estimated_rows": 10000,
+      "processing_type": "full",
+      "filters": {},
+      "configuration": {}
+    },
+    "quality_metrics": {
+      "completeness": 95.5,
+      "validity": 88.2,
+      "consistency": 91.7,
+      "accuracy": 94.3,
+      "uniqueness": 97.3,
+      "timeliness": 89.1,
+      "overall_score": 92.8
+    },
+    "compliance": {
+      "gdpr_compliant": true,
+      "pii_fields_detected": [],
+      "encryption_status": "encrypted",
+      "retention_policy_met": true,
+      "risk_level": "low",
+      "ccpa_compliant": null,
+      "hipaa_compliant": true,
+      "recommendations": []
+    },
+    "predictive": null,
+    "issues_found": 142,
+    "total_records_scanned": 10000,
+    "error_message": null,
+    "duration_seconds": 45.2
+  },
+  "scan_24d91d7fafd2": {
+    "job_id": "scan_24d91d7fafd2",
+    "source_id": "enterprise_prod",
+    "source_name": "DataSource_enterprise_prod",
+    "status": "completed",
+    "progress": 100,
+    "started_at": "2026-02-04T17:14:08.926312+00:00",
+    "completed_at": "2026-02-04T17:14:08.926312+00:00",
+    "metadata": {
+      "connection_id": "conn_001",
+      "table_count": 5,
+      "estimated_rows": 10000,
+      "processing_type": "full",
+      "filters": {},
+      "configuration": {}
+    },
+    "quality_metrics": {
+      "completeness": 95.5,
+      "validity": 88.2,
+      "consistency": 91.7,
+      "accuracy": 94.3,
+      "uniqueness": 97.3,
+      "timeliness": 89.1,
+      "overall_score": 92.8
+    },
+    "compliance": {
+      "gdpr_compliant": true,
+      "pii_fields_detected": [],
+      "encryption_status": "encrypted",
+      "retention_policy_met": true,
+      "risk_level": "low",
+      "ccpa_compliant": null,
+      "hipaa_compliant": true,
+      "recommendations": []
+    },
+    "predictive": null,
+    "issues_found": 142,
+    "total_records_scanned": 10000,
+    "error_message": null,
+    "duration_seconds": 45.2
+  },
+  "scan_9e80545ec6de": {
+    "job_id": "scan_9e80545ec6de",
+    "source_id": "morocco_prod",
+    "source_name": "DataSource_morocco_prod",
+    "status": "completed",
+    "progress": 100,
+    "started_at": "2026-02-04T19:10:21.975732+00:00",
+    "completed_at": "2026-02-04T19:10:21.975732+00:00",
+    "metadata": {
+      "connection_id": "conn_001",
+      "table_count": 5,
+      "estimated_rows": 10000,
+      "processing_type": "full",
+      "filters": {},
+      "configuration": {}
+    },
+    "quality_metrics": {
+      "completeness": 95.5,
+      "validity": 88.2,
+      "consistency": 91.7,
+      "accuracy": 94.3,
+      "uniqueness": 97.3,
+      "timeliness": 89.1,
+      "overall_score": 92.8
+    },
+    "compliance": {
+      "gdpr_compliant": true,
+      "pii_fields_detected": [],
+      "encryption_status": "encrypted",
+      "retention_policy_met": true,
+      "risk_level": "low",
+      "ccpa_compliant": null,
+      "hipaa_compliant": true,
+      "recommendations": []
+    },
+    "predictive": null,
+    "issues_found": 142,
+    "total_records_scanned": 10000,
+    "error_message": null,
+    "duration_seconds": 45.2
+  },
+  "scan_1ef0b023ad00": {
+    "job_id": "scan_1ef0b023ad00",
+    "source_id": "morocco_prod",
+    "source_name": "DataSource_morocco_prod",
+    "status": "completed",
+    "progress": 100,
+    "started_at": "2026-02-04T19:18:44.176954+00:00",
+    "completed_at": "2026-02-04T19:18:44.176954+00:00",
+    "metadata": {
+      "connection_id": "conn_001",
+      "table_count": 5,
+      "estimated_rows": 10000,
+      "processing_type": "full",
+      "filters": {},
+      "configuration": {}
+    },
+    "quality_metrics": {
+      "completeness": 95.5,
+      "validity": 88.2,
+      "consistency": 91.7,
+      "accuracy": 94.3,
+      "uniqueness": 97.3,
+      "timeliness": 89.1,
+      "overall_score": 92.8
+    },
+    "compliance": {
+      "gdpr_compliant": true,
+      "pii_fields_detected": [],
+      "encryption_status": "encrypted",
+      "retention_policy_met": true,
+      "risk_level": "low",
+      "ccpa_compliant": null,
+      "hipaa_compliant": true,
+      "recommendations": []
+    },
+    "predictive": null,
+    "issues_found": 142,
+    "total_records_scanned": 10000,
+    "error_message": null,
+    "duration_seconds": 45.2
+  },
+  "scan_cb727f654ed6": {
+    "job_id": "scan_cb727f654ed6",
+    "source_id": "morocco_prod",
+    "source_name": "DataSource_morocco_prod",
+    "status": "completed",
+    "progress": 100,
+    "started_at": "2026-02-04T19:18:55.956098+00:00",
+    "completed_at": "2026-02-04T19:18:55.956098+00:00",
+    "metadata": {
+      "connection_id": "conn_001",
+      "table_count": 5,
+      "estimated_rows": 10000,
+      "processing_type": "full",
+      "filters": {},
+      "configuration": {}
+    },
+    "quality_metrics": {
+      "completeness": 95.5,
+      "validity": 88.2,
+      "consistency": 91.7,
+      "accuracy": 94.3,
+      "uniqueness": 97.3,
+      "timeliness": 89.1,
+      "overall_score": 92.8
+    },
+    "compliance": {
+      "gdpr_compliant": true,
+      "pii_fields_detected": [],
+      "encryption_status": "encrypted",
+      "retention_policy_met": true,
+      "risk_level": "low",
+      "ccpa_compliant": null,
+      "hipaa_compliant": true,
+      "recommendations": []
+    },
+    "predictive": null,
+    "issues_found": 142,
+    "total_records_scanned": 10000,
+    "error_message": null,
+    "duration_seconds": 45.2
+  }
+}

@@ -1,0 +1,210 @@
+﻿"""
+Authentication Router
+Handles user registration, login, and JWT token generation
+"""
+
+from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi.security import HTTPBearer, OAuth2PasswordRequestForm, HTTPAuthorizationCredentials
+from motor.motor_asyncio import AsyncIOMotorClient
+from datetime import datetime, timedelta
+from bson import ObjectId
+import logging
+
+from app.models.user import UserCreate, UserLogin, Token, User
+from app.core.security import verify_password, get_password_hash, create_access_token
+from app.core.database import get_database
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/auth", tags=["Authentication"])
+security = HTTPBearer()
+
+
+@router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
+async def register(
+    user_data: UserCreate,
+    db: AsyncIOMotorClient = Depends(get_database)
+):
+    """
+    Register a new user
+    
+    Args:
+        user_data: User registration data (email, password, full_name)
+        db: MongoDB client
+        
+    Returns:
+        Created user object (without password)
+        
+    Raises:
+        HTTPException: If email already exists
+    """
+    try:
+        existing_user = await db.dhcaas.users.find_one({"email": user_data.email})
+        
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        
+        user_doc = {
+            "email": user_data.email,
+            "hashed_password": get_password_hash(user_data.password),
+            "full_name": user_data.full_name,
+            "is_active": True,
+            "is_superuser": False,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        
+        result = await db.dhcaas.users.insert_one(user_doc)
+        user_doc["_id"] = result.inserted_id
+        
+        logger.info(f"New user registered: {user_data.email}")
+        
+        return User(
+            id=str(user_doc["_id"]),
+            email=user_doc["email"],
+            full_name=user_doc.get("full_name"),
+            is_active=user_doc["is_active"],
+            is_superuser=user_doc["is_superuser"],
+            created_at=user_doc["created_at"],
+            updated_at=user_doc["updated_at"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Registration failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
+        )
+
+
+@router.post("/login", response_model=Token)
+async def login(
+    credentials: UserLogin,
+    db: AsyncIOMotorClient = Depends(get_database)
+):
+    """
+    Login and get JWT access token
+    
+    Args:
+        credentials: User login credentials (email, password)
+        db: MongoDB client
+        
+    Returns:
+        JWT access token
+        
+    Raises:
+        HTTPException: If credentials are invalid
+    """
+    try:
+        user = await db.dhcaas.users.find_one({"email": form_data.username})
+        
+        if not user:
+            logger.warning(f"Login attempt with non-existent email: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        if not verify_password(form_data.password, user["hashed_password"]):
+            logger.warning(f"Failed login attempt for user: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        if not user.get("is_active", True):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User account is inactive"
+            )
+        
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={
+                "user_id": str(user["_id"]),
+                "email": user["email"],
+                "is_superuser": user.get("is_superuser", False)
+            },
+            expires_delta=access_token_expires
+        )
+        
+        await db.dhcaas.users.update_one(
+            {"_id": user["_id"]},
+            {"$set": {"last_login": datetime.utcnow()}}
+        )
+        
+        logger.info(f"Successful login: {form_data.username}")
+        
+        return Token(access_token=access_token, token_type="bearer")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login failed: {str(e)}"
+        )
+
+
+@router.get("/me", response_model=User)
+async def get_current_user_info(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncIOMotorClient = Depends(get_database)
+):
+    """
+    Get current authenticated user information
+    
+    Args:
+        credentials: Bearer token from Authorization header
+        db: MongoDB client
+        
+    Returns:
+        Current user object
+    """
+    from app.dependencies.auth import get_current_user_from_token
+    
+    try:
+        current_user = await get_current_user_from_token(credentials, db)
+        
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated"
+            )
+        
+        user = await db.dhcaas.users.find_one({"_id": ObjectId(current_user["user_id"])})
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        return User(
+            id=str(user["_id"]),
+            email=user["email"],
+            full_name=user.get("full_name"),
+            is_active=user.get("is_active", True),
+            is_superuser=user.get("is_superuser", False),
+            created_at=user["created_at"],
+            updated_at=user["updated_at"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get user info: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve user information"
+        )
+

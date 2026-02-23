@@ -1,0 +1,1004 @@
+﻿{
+    "openapi":  "3.1.0",
+    "info":  {
+                 "title":  "DHCaaS API",
+                 "description":  "\n    ## Data Health Check as a Service - Enterprise Backend\n    \n    **DHCaaS** provides comprehensive data quality monitoring, governance, \n    and compliance management for enterprise data teams.\n    \n    ### Key Features:\n    - Data Quality Scanning - Multi-dimensional quality analysis\n    - Compliance Monitoring - GDPR, CCPA, HIPAA compliance checks\n    - Predictive Analytics - ML-powered anomaly detection\n    - Quality Metrics - Completeness, validity, consistency, accuracy\n    - PII Detection - Automatic sensitive data identification\n    - PDF Reports - Professional compliance reports\n    - Scan Jobs Management - Asynchronous data source scanning\n    ",
+                 "version":  "1.0.0"
+             },
+    "paths":  {
+                  "/api/v1/scans/run":  {
+                                            "post":  {
+                                                         "tags":  [
+                                                                      "scans",
+                                                                      "scans"
+                                                                  ],
+                                                         "summary":  "Trigger Scan",
+                                                         "operationId":  "trigger_scan_api_v1_scans_run_post",
+                                                         "parameters":  [
+                                                                            {
+                                                                                "name":  "data_source_id",
+                                                                                "in":  "query",
+                                                                                "required":  true,
+                                                                                "schema":  "@{type=string; title=Data Source Id}"
+                                                                            },
+                                                                            {
+                                                                                "name":  "scan_type",
+                                                                                "in":  "query",
+                                                                                "required":  false,
+                                                                                "schema":  "@{type=string; default=full; title=Scan Type}"
+                                                                            }
+                                                                        ],
+                                                         "requestBody":  {
+                                                                             "content":  {
+                                                                                             "application/json":  "@{schema=}"
+                                                                                         }
+                                                                         },
+                                                         "responses":  {
+                                                                           "200":  {
+                                                                                       "description":  "Successful Response",
+                                                                                       "content":  "@{application/json=}"
+                                                                                   },
+                                                                           "422":  {
+                                                                                       "description":  "Validation Error",
+                                                                                       "content":  "@{application/json=}"
+                                                                                   }
+                                                                       }
+                                                     }
+                                        },
+                  "/api/v1/scans/":  {
+                                         "get":  {
+                                                     "tags":  [
+                                                                  "scans",
+                                                                  "scans"
+                                                              ],
+                                                     "summary":  "List Scans",
+                                                     "operationId":  "list_scans_api_v1_scans__get",
+                                                     "parameters":  [
+                                                                        {
+                                                                            "name":  "limit",
+                                                                            "in":  "query",
+                                                                            "required":  false,
+                                                                            "schema":  "@{type=integer; default=50; title=Limit}"
+                                                                        },
+                                                                        {
+                                                                            "name":  "offset",
+                                                                            "in":  "query",
+                                                                            "required":  false,
+                                                                            "schema":  "@{type=integer; default=0; title=Offset}"
+                                                                        }
+                                                                    ],
+                                                     "responses":  {
+                                                                       "200":  {
+                                                                                   "description":  "Successful Response",
+                                                                                   "content":  "@{application/json=}"
+                                                                               },
+                                                                       "422":  {
+                                                                                   "description":  "Validation Error",
+                                                                                   "content":  "@{application/json=}"
+                                                                               }
+                                                                   }
+                                                 }
+                                     },
+                  "/api/v1/scans/{job_id}":  {
+                                                 "get":  {
+                                                             "tags":  [
+                                                                          "scans",
+                                                                          "scans"
+                                                                      ],
+                                                             "summary":  "Get Scan Details",
+                                                             "operationId":  "get_scan_details_api_v1_scans__job_id__get",
+                                                             "parameters":  [
+                                                                                {
+                                                                                    "name":  "job_id",
+                                                                                    "in":  "path",
+                                                                                    "required":  true,
+                                                                                    "schema":  "@{type=string; title=Job Id}"
+                                                                                }
+                                                                            ],
+                                                             "responses":  {
+                                                                               "200":  {
+                                                                                           "description":  "Successful Response",
+                                                                                           "content":  "@{application/json=}"
+                                                                                       },
+                                                                               "422":  {
+                                                                                           "description":  "Validation Error",
+                                                                                           "content":  "@{application/json=}"
+                                                                                       }
+                                                                           }
+                                                         },
+                                                 "delete":  {
+                                                                "tags":  [
+                                                                             "scans",
+                                                                             "scans"
+                                                                         ],
+                                                                "summary":  "Delete Scan",
+                                                                "operationId":  "delete_scan_api_v1_scans__job_id__delete",
+                                                                "parameters":  [
+                                                                                   {
+                                                                                       "name":  "job_id",
+                                                                                       "in":  "path",
+                                                                                       "required":  true,
+                                                                                       "schema":  "@{type=string; title=Job Id}"
+                                                                                   }
+                                                                               ],
+                                                                "responses":  {
+                                                                                  "200":  {
+                                                                                              "description":  "Successful Response",
+                                                                                              "content":  "@{application/json=}"
+                                                                                          },
+                                                                                  "422":  {
+                                                                                              "description":  "Validation Error",
+                                                                                              "content":  "@{application/json=}"
+                                                                                          }
+                                                                              }
+                                                            }
+                                             },
+                  "/api/v1/scans/{job_id}/report":  {
+                                                        "get":  {
+                                                                    "tags":  [
+                                                                                 "scans",
+                                                                                 "scans"
+                                                                             ],
+                                                                    "summary":  "Download Report",
+                                                                    "operationId":  "download_report_api_v1_scans__job_id__report_get",
+                                                                    "parameters":  [
+                                                                                       {
+                                                                                           "name":  "job_id",
+                                                                                           "in":  "path",
+                                                                                           "required":  true,
+                                                                                           "schema":  "@{type=string; title=Job Id}"
+                                                                                       }
+                                                                                   ],
+                                                                    "responses":  {
+                                                                                      "200":  {
+                                                                                                  "description":  "Successful Response",
+                                                                                                  "content":  "@{application/json=}"
+                                                                                              },
+                                                                                      "422":  {
+                                                                                                  "description":  "Validation Error",
+                                                                                                  "content":  "@{application/json=}"
+                                                                                              }
+                                                                                  }
+                                                                }
+                                                    },
+                  "/api/v1/incidents":  {
+                                            "get":  {
+                                                        "tags":  [
+                                                                     "incidents",
+                                                                     "Incidents"
+                                                                 ],
+                                                        "summary":  "List All Incidents",
+                                                        "description":  "Retrieve paginated list of incidents with optional filtering by status and severity",
+                                                        "operationId":  "list_incidents_api_v1_incidents_get",
+                                                        "parameters":  [
+                                                                           {
+                                                                               "name":  "page",
+                                                                               "in":  "query",
+                                                                               "required":  false,
+                                                                               "schema":  "@{type=integer; minimum=1; description=Page number (1-indexed); default=1; title=Page}",
+                                                                               "description":  "Page number (1-indexed)"
+                                                                           },
+                                                                           {
+                                                                               "name":  "page_size",
+                                                                               "in":  "query",
+                                                                               "required":  false,
+                                                                               "schema":  "@{type=integer; maximum=100; minimum=1; description=Items per page; default=20; title=Page Size}",
+                                                                               "description":  "Items per page"
+                                                                           },
+                                                                           {
+                                                                               "name":  "status",
+                                                                               "in":  "query",
+                                                                               "required":  false,
+                                                                               "schema":  "@{anyOf=System.Object[]; description=Filter by incident status; title=Status}",
+                                                                               "description":  "Filter by incident status"
+                                                                           },
+                                                                           {
+                                                                               "name":  "severity",
+                                                                               "in":  "query",
+                                                                               "required":  false,
+                                                                               "schema":  "@{anyOf=System.Object[]; description=Filter by severity level; title=Severity}",
+                                                                               "description":  "Filter by severity level"
+                                                                           }
+                                                                       ],
+                                                        "responses":  {
+                                                                          "200":  {
+                                                                                      "description":  "Successful Response",
+                                                                                      "content":  "@{application/json=}"
+                                                                                  },
+                                                                          "422":  {
+                                                                                      "description":  "Validation Error",
+                                                                                      "content":  "@{application/json=}"
+                                                                                  }
+                                                                      }
+                                                    }
+                                        },
+                  "/api/v1/incidents/{incident_id}/acknowledge":  {
+                                                                      "post":  {
+                                                                                   "tags":  [
+                                                                                                "incidents",
+                                                                                                "Incidents"
+                                                                                            ],
+                                                                                   "summary":  "Acknowledge Incident",
+                                                                                   "description":  "Mark an incident as acknowledged by a specific user",
+                                                                                   "operationId":  "acknowledge_incident_api_v1_incidents__incident_id__acknowledge_post",
+                                                                                   "parameters":  [
+                                                                                                      {
+                                                                                                          "name":  "incident_id",
+                                                                                                          "in":  "path",
+                                                                                                          "required":  true,
+                                                                                                          "schema":  "@{type=string; title=Incident Id}"
+                                                                                                      }
+                                                                                                  ],
+                                                                                   "requestBody":  {
+                                                                                                       "required":  true,
+                                                                                                       "content":  {
+                                                                                                                       "application/json":  "@{schema=}"
+                                                                                                                   }
+                                                                                                   },
+                                                                                   "responses":  {
+                                                                                                     "200":  {
+                                                                                                                 "description":  "Successful Response",
+                                                                                                                 "content":  "@{application/json=}"
+                                                                                                             },
+                                                                                                     "422":  {
+                                                                                                                 "description":  "Validation Error",
+                                                                                                                 "content":  "@{application/json=}"
+                                                                                                             }
+                                                                                                 }
+                                                                               }
+                                                                  },
+                  "/api/v1/incidents/{incident_id}/resolve":  {
+                                                                  "post":  {
+                                                                               "tags":  [
+                                                                                            "incidents",
+                                                                                            "Incidents"
+                                                                                        ],
+                                                                               "summary":  "Resolve Incident",
+                                                                               "description":  "Mark an incident as resolved with resolution notes",
+                                                                               "operationId":  "resolve_incident_api_v1_incidents__incident_id__resolve_post",
+                                                                               "parameters":  [
+                                                                                                  {
+                                                                                                      "name":  "incident_id",
+                                                                                                      "in":  "path",
+                                                                                                      "required":  true,
+                                                                                                      "schema":  "@{type=string; title=Incident Id}"
+                                                                                                  }
+                                                                                              ],
+                                                                               "requestBody":  {
+                                                                                                   "required":  true,
+                                                                                                   "content":  {
+                                                                                                                   "application/json":  "@{schema=}"
+                                                                                                               }
+                                                                                               },
+                                                                               "responses":  {
+                                                                                                 "200":  {
+                                                                                                             "description":  "Successful Response",
+                                                                                                             "content":  "@{application/json=}"
+                                                                                                         },
+                                                                                                 "422":  {
+                                                                                                             "description":  "Validation Error",
+                                                                                                             "content":  "@{application/json=}"
+                                                                                                         }
+                                                                                             }
+                                                                           }
+                                                              },
+                  "/api/v1/incidents/health":  {
+                                                   "get":  {
+                                                               "tags":  [
+                                                                            "incidents",
+                                                                            "Incidents",
+                                                                            "Health"
+                                                                        ],
+                                                               "summary":  "Health Check",
+                                                               "description":  "Verify incidents API and data store are operational",
+                                                               "operationId":  "health_check_api_v1_incidents_health_get",
+                                                               "responses":  {
+                                                                                 "200":  {
+                                                                                             "description":  "Successful Response",
+                                                                                             "content":  "@{application/json=}"
+                                                                                         }
+                                                                             }
+                                                           }
+                                               },
+                  "/api/v1/scan-jobs":  {
+                                            "post":  {
+                                                         "tags":  [
+                                                                      "scan-jobs",
+                                                                      "Scan Jobs"
+                                                                  ],
+                                                         "summary":  "Create Scan Job",
+                                                         "description":  "Create a new scan job.\n\nThe scan will be executed asynchronously in the background.\nUse GET /scan-jobs/{job_id} to check status and retrieve results.\n\n**Request Body:**\n```json\n{\n  \"source_type\": \"csv\",\n  \"source_config\": {\n    \"filepath\": \"test_data/sample_customers.csv\",\n    \"delimiter\": \",\"\n  },\n  \"scan_options\": {\n    \"include_quality\": true,\n    \"include_pii\": true,\n    \"sample_size\": null\n  }\n}\n```\n\n**Response:** Job details with status \"pending\"",
+                                                         "operationId":  "create_scan_job_api_v1_scan_jobs_post",
+                                                         "requestBody":  {
+                                                                             "required":  true,
+                                                                             "content":  {
+                                                                                             "application/json":  "@{schema=}"
+                                                                                         }
+                                                                         },
+                                                         "responses":  {
+                                                                           "201":  {
+                                                                                       "description":  "Successful Response",
+                                                                                       "content":  "@{application/json=}"
+                                                                                   },
+                                                                           "422":  {
+                                                                                       "description":  "Validation Error",
+                                                                                       "content":  "@{application/json=}"
+                                                                                   }
+                                                                       }
+                                                     },
+                                            "get":  {
+                                                        "tags":  [
+                                                                     "scan-jobs",
+                                                                     "Scan Jobs"
+                                                                 ],
+                                                        "summary":  "List Scan Jobs",
+                                                        "description":  "List all scan jobs with pagination and filtering.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `page_size`: Items per page (default: 20, max: 100)\n- `status`: Filter by status (pending, running, completed, failed)\n\n**Response:** Paginated list of jobs, sorted by created_at (newest first)",
+                                                        "operationId":  "list_scan_jobs_api_v1_scan_jobs_get",
+                                                        "parameters":  [
+                                                                           {
+                                                                               "name":  "page",
+                                                                               "in":  "query",
+                                                                               "required":  false,
+                                                                               "schema":  "@{type=integer; minimum=1; description=Page number (1-indexed); default=1; title=Page}",
+                                                                               "description":  "Page number (1-indexed)"
+                                                                           },
+                                                                           {
+                                                                               "name":  "page_size",
+                                                                               "in":  "query",
+                                                                               "required":  false,
+                                                                               "schema":  "@{type=integer; maximum=100; minimum=1; description=Items per page; default=20; title=Page Size}",
+                                                                               "description":  "Items per page"
+                                                                           },
+                                                                           {
+                                                                               "name":  "status",
+                                                                               "in":  "query",
+                                                                               "required":  false,
+                                                                               "schema":  "@{anyOf=System.Object[]; description=Filter by status; title=Status}",
+                                                                               "description":  "Filter by status"
+                                                                           }
+                                                                       ],
+                                                        "responses":  {
+                                                                          "200":  {
+                                                                                      "description":  "Successful Response",
+                                                                                      "content":  "@{application/json=}"
+                                                                                  },
+                                                                          "422":  {
+                                                                                      "description":  "Validation Error",
+                                                                                      "content":  "@{application/json=}"
+                                                                                  }
+                                                                      }
+                                                    }
+                                        },
+                  "/api/v1/scan-jobs/{job_id}":  {
+                                                     "get":  {
+                                                                 "tags":  [
+                                                                              "scan-jobs",
+                                                                              "Scan Jobs"
+                                                                          ],
+                                                                 "summary":  "Get Scan Job",
+                                                                 "description":  "Get scan job by ID.\n\nReturns the full job details including results if completed.\n\n**Path Parameters:**\n- `job_id`: Scan job identifier (UUID)\n\n**Response Statuses:**\n- `pending`: Job created, waiting to start\n- `running`: Scan in progress\n- `completed`: Scan finished successfully (results available)\n- `failed`: Scan failed (error_message available)",
+                                                                 "operationId":  "get_scan_job_api_v1_scan_jobs__job_id__get",
+                                                                 "parameters":  [
+                                                                                    {
+                                                                                        "name":  "job_id",
+                                                                                        "in":  "path",
+                                                                                        "required":  true,
+                                                                                        "schema":  "@{type=string; title=Job Id}"
+                                                                                    }
+                                                                                ],
+                                                                 "responses":  {
+                                                                                   "200":  {
+                                                                                               "description":  "Successful Response",
+                                                                                               "content":  "@{application/json=}"
+                                                                                           },
+                                                                                   "422":  {
+                                                                                               "description":  "Validation Error",
+                                                                                               "content":  "@{application/json=}"
+                                                                                           }
+                                                                               }
+                                                             },
+                                                     "delete":  {
+                                                                    "tags":  [
+                                                                                 "scan-jobs",
+                                                                                 "Scan Jobs"
+                                                                             ],
+                                                                    "summary":  "Delete Scan Job",
+                                                                    "description":  "Delete a scan job.\n\n**Path Parameters:**\n- `job_id`: Scan job identifier (UUID)\n\n**Response:** 204 No Content on success",
+                                                                    "operationId":  "delete_scan_job_api_v1_scan_jobs__job_id__delete",
+                                                                    "parameters":  [
+                                                                                       {
+                                                                                           "name":  "job_id",
+                                                                                           "in":  "path",
+                                                                                           "required":  true,
+                                                                                           "schema":  "@{type=string; title=Job Id}"
+                                                                                       }
+                                                                                   ],
+                                                                    "responses":  {
+                                                                                      "204":  {
+                                                                                                  "description":  "Successful Response"
+                                                                                              },
+                                                                                      "422":  {
+                                                                                                  "description":  "Validation Error",
+                                                                                                  "content":  "@{application/json=}"
+                                                                                              }
+                                                                                  }
+                                                                }
+                                                 },
+                  "/api/v1/scan-jobs/stats/summary":  {
+                                                          "get":  {
+                                                                      "tags":  [
+                                                                                   "scan-jobs",
+                                                                                   "Scan Jobs"
+                                                                               ],
+                                                                      "summary":  "Get Scan Job Stats",
+                                                                      "description":  "Get scan job statistics.\n\nReturns counts of jobs by status.\n\n**Response:**\n```json\n{\n  \"total\": 42,\n  \"pending\": 3,\n  \"running\": 2,\n  \"completed\": 35,\n  \"failed\": 2\n}\n```",
+                                                                      "operationId":  "get_scan_job_stats_api_v1_scan_jobs_stats_summary_get",
+                                                                      "responses":  {
+                                                                                        "200":  {
+                                                                                                    "description":  "Successful Response",
+                                                                                                    "content":  "@{application/json=}"
+                                                                                                }
+                                                                                    }
+                                                                  }
+                                                      },
+                  "/":  {
+                            "get":  {
+                                        "tags":  [
+                                                     "root"
+                                                 ],
+                                        "summary":  "Read Root",
+                                        "description":  "Root endpoint - API welcome message",
+                                        "operationId":  "read_root__get",
+                                        "responses":  {
+                                                          "200":  {
+                                                                      "description":  "Successful Response",
+                                                                      "content":  "@{application/json=}"
+                                                                  }
+                                                      }
+                                    }
+                        },
+                  "/health":  {
+                                  "get":  {
+                                              "tags":  [
+                                                           "health"
+                                                       ],
+                                              "summary":  "Health Check",
+                                              "description":  "Health check endpoint for monitoring",
+                                              "operationId":  "health_check_health_get",
+                                              "responses":  {
+                                                                "200":  {
+                                                                            "description":  "Successful Response",
+                                                                            "content":  "@{application/json=}"
+                                                                        }
+                                                            }
+                                          }
+                              },
+                  "/api/v1/info":  {
+                                       "get":  {
+                                                   "tags":  [
+                                                                "info"
+                                                            ],
+                                                   "summary":  "Api Info",
+                                                   "description":  "API information endpoint",
+                                                   "operationId":  "api_info_api_v1_info_get",
+                                                   "responses":  {
+                                                                     "200":  {
+                                                                                 "description":  "Successful Response",
+                                                                                 "content":  "@{application/json=}"
+                                                                             }
+                                                                 }
+                                               }
+                                   }
+              },
+    "components":  {
+                       "schemas":  {
+                                       "AcknowledgeRequest":  {
+                                                                  "properties":  {
+                                                                                     "acknowledged_by":  {
+                                                                                                             "type":  "string",
+                                                                                                             "minLength":  1,
+                                                                                                             "pattern":  "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                                                                                                             "title":  "Acknowledged By",
+                                                                                                             "description":  "Email address of user acknowledging the incident"
+                                                                                                         },
+                                                                                     "notes":  {
+                                                                                                   "anyOf":  " ",
+                                                                                                   "title":  "Notes",
+                                                                                                   "description":  "Optional acknowledgment notes"
+                                                                                               }
+                                                                                 },
+                                                                  "type":  "object",
+                                                                  "required":  [
+                                                                                   "acknowledged_by"
+                                                                               ],
+                                                                  "title":  "AcknowledgeRequest",
+                                                                  "description":  "Request body for acknowledging an incident."
+                                                              },
+                                       "CreateScanJobRequest":  {
+                                                                    "properties":  {
+                                                                                       "source_type":  {
+                                                                                                           "type":  "string",
+                                                                                                           "title":  "Source Type",
+                                                                                                           "description":  "Data source type (csv, sql, etc.)"
+                                                                                                       },
+                                                                                       "source_config":  {
+                                                                                                             "type":  "object",
+                                                                                                             "title":  "Source Config",
+                                                                                                             "description":  "Source connection parameters"
+                                                                                                         },
+                                                                                       "scan_options":  {
+                                                                                                            "$ref":  "#/components/schemas/ScanOptionsModel-Input"
+                                                                                                        }
+                                                                                   },
+                                                                    "type":  "object",
+                                                                    "required":  [
+                                                                                     "source_type",
+                                                                                     "source_config"
+                                                                                 ],
+                                                                    "title":  "CreateScanJobRequest",
+                                                                    "description":  "Request model for creating a scan job."
+                                                                },
+                                       "HTTPValidationError":  {
+                                                                   "properties":  {
+                                                                                      "detail":  {
+                                                                                                     "items":  "@{$ref=#/components/schemas/ValidationError}",
+                                                                                                     "type":  "array",
+                                                                                                     "title":  "Detail"
+                                                                                                 }
+                                                                                  },
+                                                                   "type":  "object",
+                                                                   "title":  "HTTPValidationError"
+                                                               },
+                                       "Incident":  {
+                                                        "properties":  {
+                                                                           "id":  {
+                                                                                      "type":  "string",
+                                                                                      "title":  "Id",
+                                                                                      "description":  "Unique incident identifier"
+                                                                                  },
+                                                                           "severity":  {
+                                                                                            "allOf":  "",
+                                                                                            "description":  "Incident severity level"
+                                                                                        },
+                                                                           "title":  {
+                                                                                         "type":  "string",
+                                                                                         "maxLength":  200,
+                                                                                         "minLength":  1,
+                                                                                         "title":  "Title",
+                                                                                         "description":  "Incident title"
+                                                                                     },
+                                                                           "description":  {
+                                                                                               "type":  "string",
+                                                                                               "minLength":  1,
+                                                                                               "title":  "Description",
+                                                                                               "description":  "Detailed incident description"
+                                                                                           },
+                                                                           "status":  {
+                                                                                          "allOf":  "",
+                                                                                          "description":  "Current incident status"
+                                                                                      },
+                                                                           "source":  {
+                                                                                          "type":  "string",
+                                                                                          "title":  "Source",
+                                                                                          "description":  "Incident source system"
+                                                                                      },
+                                                                           "scan_id":  {
+                                                                                           "anyOf":  " ",
+                                                                                           "title":  "Scan Id",
+                                                                                           "description":  "Related scan job ID"
+                                                                                       },
+                                                                           "data_source":  {
+                                                                                               "anyOf":  " ",
+                                                                                               "title":  "Data Source",
+                                                                                               "description":  "Affected data source"
+                                                                                           },
+                                                                           "affected_records":  {
+                                                                                                    "anyOf":  " ",
+                                                                                                    "title":  "Affected Records",
+                                                                                                    "description":  "Number of affected records"
+                                                                                                },
+                                                                           "regulatory_frameworks":  {
+                                                                                                         "items":  "@{type=string}",
+                                                                                                         "type":  "array",
+                                                                                                         "title":  "Regulatory Frameworks",
+                                                                                                         "description":  "Applicable regulatory frameworks"
+                                                                                                     },
+                                                                           "created_at":  {
+                                                                                              "type":  "string",
+                                                                                              "title":  "Created At",
+                                                                                              "description":  "ISO 8601 timestamp of creation"
+                                                                                          },
+                                                                           "acknowledged":  {
+                                                                                                "type":  "boolean",
+                                                                                                "title":  "Acknowledged",
+                                                                                                "description":  "Whether incident has been acknowledged"
+                                                                                            },
+                                                                           "acknowledged_at":  {
+                                                                                                   "anyOf":  " ",
+                                                                                                   "title":  "Acknowledged At",
+                                                                                                   "description":  "ISO 8601 timestamp of acknowledgment"
+                                                                                               },
+                                                                           "acknowledged_by":  {
+                                                                                                   "anyOf":  " ",
+                                                                                                   "title":  "Acknowledged By",
+                                                                                                   "description":  "Email of user who acknowledged"
+                                                                                               },
+                                                                           "resolved_at":  {
+                                                                                               "anyOf":  " ",
+                                                                                               "title":  "Resolved At",
+                                                                                               "description":  "ISO 8601 timestamp of resolution"
+                                                                                           },
+                                                                           "resolved_by":  {
+                                                                                               "anyOf":  " ",
+                                                                                               "title":  "Resolved By",
+                                                                                               "description":  "Email of user who resolved"
+                                                                                           },
+                                                                           "assignee":  {
+                                                                                            "anyOf":  " ",
+                                                                                            "title":  "Assignee",
+                                                                                            "description":  "Assigned team or individual"
+                                                                                        },
+                                                                           "tags":  {
+                                                                                        "items":  "@{type=string}",
+                                                                                        "type":  "array",
+                                                                                        "title":  "Tags",
+                                                                                        "description":  "Incident tags for categorization"
+                                                                                    },
+                                                                           "resolution_notes":  {
+                                                                                                    "anyOf":  " ",
+                                                                                                    "title":  "Resolution Notes",
+                                                                                                    "description":  "Notes explaining resolution"
+                                                                                                }
+                                                                       },
+                                                        "type":  "object",
+                                                        "required":  [
+                                                                         "id",
+                                                                         "severity",
+                                                                         "title",
+                                                                         "description",
+                                                                         "status",
+                                                                         "source",
+                                                                         "scan_id",
+                                                                         "data_source",
+                                                                         "affected_records",
+                                                                         "regulatory_frameworks",
+                                                                         "created_at",
+                                                                         "acknowledged",
+                                                                         "acknowledged_at",
+                                                                         "acknowledged_by",
+                                                                         "resolved_at",
+                                                                         "resolved_by",
+                                                                         "assignee",
+                                                                         "tags",
+                                                                         "resolution_notes"
+                                                                     ],
+                                                        "title":  "Incident",
+                                                        "description":  "Complete incident data model with all fields.",
+                                                        "example":  {
+                                                                        "acknowledged":  false,
+                                                                        "created_at":  "2026-02-05T10:15:32Z",
+                                                                        "description":  "Sensitive data found in public storage",
+                                                                        "id":  "INC-2026-001",
+                                                                        "severity":  "critical",
+                                                                        "source":  "automated_scan",
+                                                                        "status":  "open",
+                                                                        "title":  "Unencrypted PII Data Detected"
+                                                                    }
+                                                    },
+                                       "IncidentListResponse":  {
+                                                                    "properties":  {
+                                                                                       "total":  {
+                                                                                                     "type":  "integer",
+                                                                                                     "title":  "Total",
+                                                                                                     "description":  "Total number of incidents matching filters"
+                                                                                                 },
+                                                                                       "page":  {
+                                                                                                    "type":  "integer",
+                                                                                                    "minimum":  1.0,
+                                                                                                    "title":  "Page",
+                                                                                                    "description":  "Current page number"
+                                                                                                },
+                                                                                       "page_size":  {
+                                                                                                         "type":  "integer",
+                                                                                                         "maximum":  100.0,
+                                                                                                         "minimum":  1.0,
+                                                                                                         "title":  "Page Size",
+                                                                                                         "description":  "Number of items per page"
+                                                                                                     },
+                                                                                       "total_pages":  {
+                                                                                                           "type":  "integer",
+                                                                                                           "minimum":  0.0,
+                                                                                                           "title":  "Total Pages",
+                                                                                                           "description":  "Total number of pages"
+                                                                                                       },
+                                                                                       "incidents":  {
+                                                                                                         "items":  "@{$ref=#/components/schemas/Incident}",
+                                                                                                         "type":  "array",
+                                                                                                         "title":  "Incidents",
+                                                                                                         "description":  "List of incidents for current page"
+                                                                                                     }
+                                                                                   },
+                                                                    "type":  "object",
+                                                                    "required":  [
+                                                                                     "total",
+                                                                                     "page",
+                                                                                     "page_size",
+                                                                                     "total_pages",
+                                                                                     "incidents"
+                                                                                 ],
+                                                                    "title":  "IncidentListResponse",
+                                                                    "description":  "Paginated list response for incidents."
+                                                                },
+                                       "IncidentSeverity":  {
+                                                                "type":  "string",
+                                                                "enum":  [
+                                                                             "critical",
+                                                                             "high",
+                                                                             "medium",
+                                                                             "low"
+                                                                         ],
+                                                                "title":  "IncidentSeverity",
+                                                                "description":  "Valid incident severity levels."
+                                                            },
+                                       "IncidentStatus":  {
+                                                              "type":  "string",
+                                                              "enum":  [
+                                                                           "open",
+                                                                           "acknowledged",
+                                                                           "resolved"
+                                                                       ],
+                                                              "title":  "IncidentStatus",
+                                                              "description":  "Valid incident status values."
+                                                          },
+                                       "MessageResponse":  {
+                                                               "properties":  {
+                                                                                  "message":  {
+                                                                                                  "type":  "string",
+                                                                                                  "title":  "Message",
+                                                                                                  "description":  "Success message"
+                                                                                              },
+                                                                                  "incident":  {
+                                                                                                   "allOf":  "",
+                                                                                                   "description":  "Updated incident data"
+                                                                                               }
+                                                                              },
+                                                               "type":  "object",
+                                                               "required":  [
+                                                                                "message",
+                                                                                "incident"
+                                                                            ],
+                                                               "title":  "MessageResponse",
+                                                               "description":  "Generic success message response."
+                                                           },
+                                       "ResolveRequest":  {
+                                                              "properties":  {
+                                                                                 "resolved_by":  {
+                                                                                                     "type":  "string",
+                                                                                                     "minLength":  1,
+                                                                                                     "pattern":  "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                                                                                                     "title":  "Resolved By",
+                                                                                                     "description":  "Email address of user resolving the incident"
+                                                                                                 },
+                                                                                 "resolution_notes":  {
+                                                                                                          "type":  "string",
+                                                                                                          "maxLength":  1000,
+                                                                                                          "minLength":  10,
+                                                                                                          "title":  "Resolution Notes",
+                                                                                                          "description":  "Detailed explanation of resolution"
+                                                                                                      }
+                                                                             },
+                                                              "type":  "object",
+                                                              "required":  [
+                                                                               "resolved_by",
+                                                                               "resolution_notes"
+                                                                           ],
+                                                              "title":  "ResolveRequest",
+                                                              "description":  "Request body for resolving an incident."
+                                                          },
+                                       "ScanJobListResponse":  {
+                                                                   "properties":  {
+                                                                                      "jobs":  {
+                                                                                                   "items":  "@{$ref=#/components/schemas/ScanJobResponse}",
+                                                                                                   "type":  "array",
+                                                                                                   "title":  "Jobs"
+                                                                                               },
+                                                                                      "total":  {
+                                                                                                    "type":  "integer",
+                                                                                                    "title":  "Total"
+                                                                                                },
+                                                                                      "page":  {
+                                                                                                   "type":  "integer",
+                                                                                                   "title":  "Page"
+                                                                                               },
+                                                                                      "page_size":  {
+                                                                                                        "type":  "integer",
+                                                                                                        "title":  "Page Size"
+                                                                                                    },
+                                                                                      "total_pages":  {
+                                                                                                          "type":  "integer",
+                                                                                                          "title":  "Total Pages"
+                                                                                                      }
+                                                                                  },
+                                                                   "type":  "object",
+                                                                   "required":  [
+                                                                                    "jobs",
+                                                                                    "total",
+                                                                                    "page",
+                                                                                    "page_size",
+                                                                                    "total_pages"
+                                                                                ],
+                                                                   "title":  "ScanJobListResponse",
+                                                                   "description":  "Response model for list of scan jobs."
+                                                               },
+                                       "ScanJobResponse":  {
+                                                               "properties":  {
+                                                                                  "job_id":  {
+                                                                                                 "type":  "string",
+                                                                                                 "title":  "Job Id"
+                                                                                             },
+                                                                                  "source_type":  {
+                                                                                                      "type":  "string",
+                                                                                                      "title":  "Source Type"
+                                                                                                  },
+                                                                                  "source_config":  {
+                                                                                                        "type":  "object",
+                                                                                                        "title":  "Source Config"
+                                                                                                    },
+                                                                                  "scan_options":  {
+                                                                                                       "$ref":  "#/components/schemas/ScanOptionsModel-Output"
+                                                                                                   },
+                                                                                  "status":  {
+                                                                                                 "type":  "string",
+                                                                                                 "title":  "Status"
+                                                                                             },
+                                                                                  "results":  {
+                                                                                                  "anyOf":  " ",
+                                                                                                  "title":  "Results"
+                                                                                              },
+                                                                                  "error_message":  {
+                                                                                                        "anyOf":  " ",
+                                                                                                        "title":  "Error Message"
+                                                                                                    },
+                                                                                  "created_at":  {
+                                                                                                     "type":  "string",
+                                                                                                     "title":  "Created At"
+                                                                                                 },
+                                                                                  "updated_at":  {
+                                                                                                     "type":  "string",
+                                                                                                     "title":  "Updated At"
+                                                                                                 },
+                                                                                  "completed_at":  {
+                                                                                                       "anyOf":  " ",
+                                                                                                       "title":  "Completed At"
+                                                                                                   }
+                                                                              },
+                                                               "type":  "object",
+                                                               "required":  [
+                                                                                "job_id",
+                                                                                "source_type",
+                                                                                "source_config",
+                                                                                "scan_options",
+                                                                                "status",
+                                                                                "results",
+                                                                                "error_message",
+                                                                                "created_at",
+                                                                                "updated_at",
+                                                                                "completed_at"
+                                                                            ],
+                                                               "title":  "ScanJobResponse",
+                                                               "description":  "Response model for scan job."
+                                                           },
+                                       "ScanJobStatsResponse":  {
+                                                                    "properties":  {
+                                                                                       "total":  {
+                                                                                                     "type":  "integer",
+                                                                                                     "title":  "Total"
+                                                                                                 },
+                                                                                       "pending":  {
+                                                                                                       "type":  "integer",
+                                                                                                       "title":  "Pending"
+                                                                                                   },
+                                                                                       "running":  {
+                                                                                                       "type":  "integer",
+                                                                                                       "title":  "Running"
+                                                                                                   },
+                                                                                       "completed":  {
+                                                                                                         "type":  "integer",
+                                                                                                         "title":  "Completed"
+                                                                                                     },
+                                                                                       "failed":  {
+                                                                                                      "type":  "integer",
+                                                                                                      "title":  "Failed"
+                                                                                                  }
+                                                                                   },
+                                                                    "type":  "object",
+                                                                    "required":  [
+                                                                                     "total",
+                                                                                     "pending",
+                                                                                     "running",
+                                                                                     "completed",
+                                                                                     "failed"
+                                                                                 ],
+                                                                    "title":  "ScanJobStatsResponse",
+                                                                    "description":  "Response model for scan job statistics."
+                                                                },
+                                       "ScanOptionsModel-Input":  {
+                                                                      "properties":  {
+                                                                                         "include_quality":  {
+                                                                                                                 "type":  "boolean",
+                                                                                                                 "title":  "Include Quality",
+                                                                                                                 "description":  "Include quality profiling",
+                                                                                                                 "default":  true
+                                                                                                             },
+                                                                                         "include_pii":  {
+                                                                                                             "type":  "boolean",
+                                                                                                             "title":  "Include Pii",
+                                                                                                             "description":  "Include PII detection",
+                                                                                                             "default":  true
+                                                                                                         },
+                                                                                         "sample_size":  {
+                                                                                                             "anyOf":  " ",
+                                                                                                             "title":  "Sample Size",
+                                                                                                             "description":  "Number of rows to analyze (None = all)"
+                                                                                                         }
+                                                                                     },
+                                                                      "type":  "object",
+                                                                      "title":  "ScanOptionsModel",
+                                                                      "description":  "Scan configuration options."
+                                                                  },
+                                       "ScanOptionsModel-Output":  {
+                                                                       "properties":  {
+                                                                                          "include_quality":  {
+                                                                                                                  "type":  "boolean",
+                                                                                                                  "title":  "Include Quality",
+                                                                                                                  "description":  "Include quality profiling",
+                                                                                                                  "default":  true
+                                                                                                              },
+                                                                                          "include_pii":  {
+                                                                                                              "type":  "boolean",
+                                                                                                              "title":  "Include Pii",
+                                                                                                              "description":  "Include PII detection",
+                                                                                                              "default":  true
+                                                                                                          },
+                                                                                          "sample_size":  {
+                                                                                                              "anyOf":  " ",
+                                                                                                              "title":  "Sample Size",
+                                                                                                              "description":  "Number of rows to analyze (None = all)"
+                                                                                                          }
+                                                                                      },
+                                                                       "type":  "object",
+                                                                       "required":  [
+                                                                                        "include_quality",
+                                                                                        "include_pii",
+                                                                                        "sample_size"
+                                                                                    ],
+                                                                       "title":  "ScanOptionsModel",
+                                                                       "description":  "Scan configuration options."
+                                                                   },
+                                       "ValidationError":  {
+                                                               "properties":  {
+                                                                                  "loc":  {
+                                                                                              "items":  "@{anyOf=System.Object[]}",
+                                                                                              "type":  "array",
+                                                                                              "title":  "Location"
+                                                                                          },
+                                                                                  "msg":  {
+                                                                                              "type":  "string",
+                                                                                              "title":  "Message"
+                                                                                          },
+                                                                                  "type":  {
+                                                                                               "type":  "string",
+                                                                                               "title":  "Error Type"
+                                                                                           }
+                                                                              },
+                                                               "type":  "object",
+                                                               "required":  [
+                                                                                "loc",
+                                                                                "msg",
+                                                                                "type"
+                                                                            ],
+                                                               "title":  "ValidationError"
+                                                           }
+                                   }
+                   }
+}

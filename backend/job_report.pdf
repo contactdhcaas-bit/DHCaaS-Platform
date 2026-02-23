@@ -1,0 +1,1 @@
+{"error":true,"message":"Scan with job_id 'scan_20260209_140532_csv_prod' not found","status_code":404,"path":"http://localhost:8000/api/v1/reports/download-by-job/scan_20260209_140532_csv_prod"}

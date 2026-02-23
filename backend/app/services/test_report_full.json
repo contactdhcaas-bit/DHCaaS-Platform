@@ -1,0 +1,157 @@
+{
+  "datasource_name": "Test Multi-Database Environment",
+  "scan_date": "February 09, 2026",
+  "organization": "DHCaaS Platform",
+  "executive_summary": "This comprehensive data quality assessment reveals an overall score of 91.5%, indicating excellent data health. The scan identified 3 total incidents: 1 critical, 1 high priority. Immediate action is recommended for critical incidents.",
+  "key_metrics": {
+    "overall_score": 91.5,
+    "total_records": 50000,
+    "issues_count": 3,
+    "critical_issues": 1,
+    "high_issues": 1,
+    "medium_issues": 1,
+    "low_issues": 0,
+    "open_issues": 3,
+    "resolved_issues": 0
+  },
+  "key_findings": [
+    "Overall data quality exceeds enterprise standards (91.5% score)",
+    "1 critical incidents require immediate attention",
+    "1 high-priority incidents identified",
+    "Data source 'Unknown' has 3 incidents",
+    "Recommended immediate action on high-severity incidents"
+  ],
+  "data_profile": {
+    "datasource_name": "Test Multi-Database Environment",
+    "connection_type": "Multi-Source",
+    "total_tables": 1,
+    "total_columns": "N/A",
+    "total_records": 50000,
+    "data_volume": "N/A",
+    "last_updated": "February 09, 2026 07:46 PM"
+  },
+  "quality_dimensions": {
+    "completeness": {
+      "score": 89.5,
+      "description": "Percentage of non-null values in required fields"
+    },
+    "accuracy": {
+      "score": 86.5,
+      "description": "Data conforms to expected formats and ranges"
+    },
+    "consistency": {
+      "score": 94.5,
+      "description": "Data consistent across related fields"
+    },
+    "validity": {
+      "score": 88.5,
+      "description": "Data meets validation rules and constraints"
+    }
+  },
+  "issues": [
+    {
+      "severity": "Critical",
+      "rule_name": "NULL Values Detected in User Email Column",
+      "column_name": "N/A",
+      "affected_rows": 250
+    },
+    {
+      "severity": "High",
+      "rule_name": "Duplicate Customer Records",
+      "column_name": "N/A",
+      "affected_rows": 1240
+    },
+    {
+      "severity": "Medium",
+      "rule_name": "Invalid Email Format",
+      "column_name": "N/A",
+      "affected_rows": 50
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "Immediate",
+      "category": "Data Update",
+      "action": "Populate NULL values in 'users.email'",
+      "impact": "Will fix 250 NULL values",
+      "effort": "2 hours",
+      "_full_remediation": {
+        "suggested_action": "Populate NULL values in 'users.email'",
+        "remediation_type": "data_update",
+        "priority": "immediate",
+        "sql_fix": "-- Fix NULL values in users.email\n-- Step 1: Count NULLs\nSELECT COUNT(*) as null_count\nFROM users\nWHERE email IS NULL;\n\n-- Step 2: Update with default value\nUPDATE users\nSET email = 'DEFAULT_VALUE'  -- Replace with appropriate default\nWHERE email IS NULL;\n\n-- Step 3: Add NOT NULL constraint (optional)\nALTER TABLE users\nMODIFY COLUMN email VARCHAR(255) NOT NULL;\n",
+        "manual_steps": [
+          "1. Review business rules for 'email' default values",
+          "2. Check upstream data source for root cause of NULLs",
+          "3. Execute SQL update with appropriate default value",
+          "4. Add NOT NULL constraint if column is required",
+          "5. Implement validation at data ingestion layer"
+        ],
+        "expected_improvement": "Will fix 250 NULL values",
+        "estimated_effort": "2 hours",
+        "impact_analysis": "NULL values in 'email' cause application errors. Immediate fix recommended.",
+        "prevention_strategy": "Add NOT NULL constraint and implement default value logic in ETL",
+        "incident_id": "INC-2026-001",
+        "rule_name": "NULL Values Detected in User Email Column",
+        "database_type": "mysql",
+        "generated_at": "2026-02-09T18:46:20.081090"
+      }
+    },
+    {
+      "priority": "High",
+      "category": "Data Update",
+      "action": "Remove duplicate records from 'customers'",
+      "impact": "Will remove approximately 620 duplicate records",
+      "effort": "4 hours",
+      "_full_remediation": {
+        "suggested_action": "Remove duplicate records from 'customers'",
+        "remediation_type": "data_update",
+        "priority": "high",
+        "sql_fix": "-- Remove duplicates\n-- Step 1: Identify duplicates\nSELECT unique_column, COUNT(*) as count\nFROM customers\nGROUP BY unique_column\nHAVING COUNT(*) > 1;\n\n-- Step 2: Delete duplicates (keep first occurrence)\nDELETE FROM customers\nWHERE id NOT IN (\n  SELECT MIN(id)\n  FROM customers\n  GROUP BY unique_column\n);\n\n-- Step 3: Add UNIQUE constraint\nALTER TABLE customers\nADD CONSTRAINT unique_constraint UNIQUE (unique_column);\n",
+        "manual_steps": [
+          "1. Identify primary key or unique constraint for 'customers'",
+          "2. Review duplicates to determine which to keep",
+          "3. Backup table before deletion",
+          "4. Execute deduplication query",
+          "5. Add UNIQUE constraint to prevent future duplicates"
+        ],
+        "expected_improvement": "Will remove approximately 620 duplicate records",
+        "estimated_effort": "4 hours",
+        "impact_analysis": "Duplicates cause incorrect aggregations and inflate record counts",
+        "prevention_strategy": "Add UNIQUE constraint and implement UPSERT logic in ETL",
+        "incident_id": "INC-2026-002",
+        "rule_name": "Duplicate Customer Records",
+        "database_type": "postgresql",
+        "generated_at": "2026-02-09T18:46:20.081090"
+      }
+    },
+    {
+      "priority": "Medium",
+      "category": "Validation Rule",
+      "action": "Clean invalid email addresses in 'contacts.column_name'",
+      "impact": "Will identify 50 invalid emails",
+      "effort": "1 hours",
+      "_full_remediation": {
+        "suggested_action": "Clean invalid email addresses in 'contacts.column_name'",
+        "remediation_type": "validation_rule",
+        "priority": "medium",
+        "sql_fix": "// Fix invalid emails in MongoDB\n// Set invalid emails to null\ndb.contacts.updateMany(\n  { column_name: { $not: { $regex: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/ } } },\n  { $set: { column_name: null } }\n);\n",
+        "manual_steps": [
+          "1. Review invalid email examples",
+          "2. Set invalid emails to NULL or placeholder",
+          "3. Contact users to obtain valid emails",
+          "4. Implement email validation: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+          "5. Add email verification workflow"
+        ],
+        "expected_improvement": "Will identify 50 invalid emails",
+        "estimated_effort": "1 hours",
+        "impact_analysis": "Invalid emails prevent communication. May impact marketing/notifications.",
+        "prevention_strategy": "Add regex validation and email verification workflow",
+        "incident_id": "INC-2026-003",
+        "rule_name": "Invalid Email Format",
+        "database_type": "mongodb",
+        "generated_at": "2026-02-09T18:46:20.082100"
+      }
+    }
+  ]
+}

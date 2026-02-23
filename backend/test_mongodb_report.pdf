@@ -1,0 +1,1 @@
+{"error":true,"message":"Invalid scan ID format","status_code":400,"path":"http://localhost:8000/api/v1/reports/download/scan_20260209_140532_csv_prod"}

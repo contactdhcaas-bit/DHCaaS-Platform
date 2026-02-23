@@ -1,0 +1,22 @@
+﻿customer_id,name,email,phone,address,credit_card
+1,John Doe,john.doe@email.com,555-0123,123 Main St,4532-1234-5678-9010
+2,Jane Smith,jane.smith@email.com,555-0124,456 Oak Ave,5421-9876-5432-1098
+3,Bob Johnson,bob.j@email.com,555-0125,789 Pine Rd,3782-8234-5612-3456
+4,Alice Williams,alice.w@email.com,555-0126,321 Elm Blvd,6011-1111-2222-3333
+5,Charlie Brown,charlie.b@email.com,555-0127,654 Maple Dr,3530-4444-5555-6666
+6,David Lee,david.lee@email.com,555-0128,987 Oak St,4916-1234-5678-9012
+7,Emma Davis,emma.d@email.com,555-0129,246 Pine Ave,5412-9876-5432-1098
+8,Frank Miller,frank.m@email.com,555-0130,135 Elm Dr,3783-8234-5612-3456
+9,Grace Wilson,grace.w@email.com,555-0131,864 Maple Ln,6012-1111-2222-3333
+10,Henry Taylor,henry.t@email.com,555-0132,579 Cedar Rd,3531-4444-5555-6666
+customer_id,name,email,phone,age,city
+1,Ahmed Ali,ahmed@example.com,+212600000001,28,Casablanca
+2,Fatima Hassan,fatima@example.com,+212600000002,35,Rabat
+3,Mohammed Said,,+212600000003,42,Marrakech
+4,Samira Benali,samira@example.com,+212600000004,29,Fes
+5,Youssef Amrani,youssef@example.com,,31,Tangier
+6,Nadia Filali,nadia.invalid.email,+212600000006,26,Agadir
+7,Karim Ziani,karim@example.com,+212600000007,38,Kenitra
+8,Ahmed Ali,ahmed@example.com,+212600000001,28,Casablanca
+9,Laila Mansouri,laila@example.com,+212600000009,33,Meknes
+10,Omar Idrissi,omar@example.com,+212600000010,45,Tetouan

@@ -1,0 +1,52 @@
+﻿{
+  "datasource_name": "Production DB",
+  "scan_date": "February 10, 2026",
+  "organization": "DHCaaS Inc.",
+  "report_id": "DQR-20260210-1200",
+  "smart_score": {
+    "overall_score": 94.7,
+    "grade": "A",
+    "total_penalty": 5.3,
+    "breakdown": {
+        "severity_penalty": 3.0,
+        "status_penalty": 1.5,
+        "aging_penalty": 0.8
+    }
+  },
+  "key_metrics": {
+    "total_records": 10000,
+    "issues_found": 15,
+    "critical_issues": 3,
+    "resolved_issues": 5
+  },
+  "quality_dimensions": {
+    "completeness": {"score": 98.5, "status": "Excellent"},
+    "accuracy": {"score": 92.0, "status": "Good"},
+    "consistency": {"score": 88.5, "status": "Fair"},
+    "validity": {"score": 99.0, "status": "Excellent"}
+  },
+  "issues": [
+    {
+      "severity": "critical",
+      "rule_name": "Null Email",
+      "column_name": "user_email",
+      "affected_rows": 150,
+      "status": "open"
+    },
+    {
+      "severity": "high",
+      "rule_name": "Invalid Phone Format",
+      "column_name": "phone_number",
+      "affected_rows": 45,
+      "status": "acknowledged"
+    }
+  ],
+  "remediation_plan": [
+    {
+       "summary": "Fix Null Emails",
+       "suggested_fix": "UPDATE users SET email = 'missing' WHERE email IS NULL;",
+       "impact": "High",
+       "effort": "Low"
+    }
+  ]
+}

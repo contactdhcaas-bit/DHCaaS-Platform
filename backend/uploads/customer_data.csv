@@ -1,0 +1,6 @@
+﻿id,customer_name,email,phone,country,membership_tier
+1,Michael Johnson,m.johnson@example.com,+1-555-1234,USA,Premium
+2,Sarah Williams,s.williams@example.com,+1-555-5678,USA,Gold
+3,James Brown,j.brown@example.com,+44-555-9012,UK,Silver
+4,Emily Davis,e.davis@example.com,+1-555-3456,USA,Premium
+5,Daniel Martinez,d.martinez@example.com,+34-555-7890,Spain,Basic

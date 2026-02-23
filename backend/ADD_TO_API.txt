@@ -1,0 +1,4 @@
+﻿# ADD THESE 2 LINES at the BOTTOM of app/api/v1/api.py (before the last line):
+
+from .endpoints import lineage
+api_router.include_router(lineage.router, prefix="/api/v1", tags=["lineage"])

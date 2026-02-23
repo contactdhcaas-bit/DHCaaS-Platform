@@ -1,0 +1,166 @@
+﻿# backend/database.py
+"""
+Central MongoDB connection module.
+All routers MUST import collections from here.
+Never create additional AsyncIOMotorClient instances elsewhere.
+"""
+
+import os
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+# CRITICAL: Load .env BEFORE reading environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
+from motor.motor_asyncio import AsyncIOMotorClient
+
+try:
+    from bson import ObjectId
+except Exception:
+    ObjectId = None
+
+# ============================================================================
+# MONGODB CONFIGURATION (SINGLE CLIENT - DO NOT DUPLICATE)
+# ============================================================================
+
+MONGODB_URL = os.getenv("MONGODB_URL")
+DB_NAME = os.getenv("MONGODB_DB_NAME", "dhcaas")
+
+if not MONGODB_URL:
+    raise ValueError(
+        "MONGODB_URL environment variable is not set. "
+        "Please configure it in your .env file."
+    )
+
+# Single MongoDB client WITHOUT TLS (for local development)
+client = AsyncIOMotorClient(
+    MONGODB_URL,
+    tls=False,
+    tlsAllowInvalidCertificates=True,
+    directConnection=True,
+    serverSelectionTimeoutMS=5000,
+    connectTimeoutMS=5000,
+    socketTimeoutMS=5000,
+    maxPoolSize=50,
+    minPoolSize=10,
+)
+
+db = client[DB_NAME]
+
+# Collection exports (all routers import from here)
+users_col = db.users
+scans_col = db.scans
+sources_col = db.sources
+incidents_col = db.incidents
+assets_col = db.assets
+
+# ============================================================================
+# DEPENDENCY INJECTION FOR FASTAPI
+# ============================================================================
+
+async def get_database():
+    """
+    FastAPI dependency to inject database connection into routes.
+    Usage: db = Depends(get_database)
+    """
+    return db
+
+# ============================================================================
+# CONNECTION HEALTH CHECK
+# ============================================================================
+
+async def check_db_connection() -> bool:
+    """
+    Ping MongoDB to verify connection.
+    Returns True if healthy, False otherwise.
+    """
+    try:
+        await client.admin.command("ping")
+        return True
+    except Exception as e:
+        print(f"[ERROR] MongoDB connection check failed: {e}")
+        return False
+
+# ============================================================================
+# SCAN OPERATIONS
+# ============================================================================
+
+def _serialize_scan(doc: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Convert MongoDB document to JSON-friendly payload."""
+    if not doc:
+        return doc
+    if "_id" in doc:
+        doc["id"] = str(doc["_id"])
+        del doc["_id"]
+    return doc
+
+async def get_all_scans(limit: int = 50) -> List[Dict[str, Any]]:
+    """Return latest scans from MongoDB."""
+    cursor = scans_col.find({}).sort("created_at", -1).limit(limit)
+    docs = await cursor.to_list(length=limit)
+    return [_serialize_scan(d) for d in docs if d]
+
+async def get_dashboard_stats(recent_limit: int = 100) -> Dict[str, Any]:
+    """Fetch real-time dashboard statistics."""
+    total_scans = await scans_col.count_documents({})
+
+    cursor = scans_col.find({}).sort("created_at", -1).limit(recent_limit)
+    recent_scans = await cursor.to_list(length=recent_limit)
+
+    recent_count = len(recent_scans)
+    compliant_count = sum(1 for s in recent_scans if (s or {}).get("compliance_score", 0) > 80)
+    total_score = sum((s or {}).get("compliance_score", 0) for s in recent_scans)
+    avg_score = total_score / max(recent_count, 1)
+
+    last_scan_dt = None
+    if recent_scans and isinstance(recent_scans[0], dict):
+        last_scan_dt = recent_scans[0].get("created_at")
+
+    return {
+        "total_scans": int(total_scans),
+        "recent_scans": int(recent_count),
+        "avg_score": round(float(avg_score), 1),
+        "high_risk": int(recent_count - compliant_count),
+        "datasets": int(recent_count),
+        "last_scan": last_scan_dt.isoformat() if last_scan_dt else None,
+        "compliant_ratio": round((compliant_count / max(recent_count, 1)) * 100, 1),
+    }
+
+async def save_scan_result(result: Dict[str, Any]) -> str:
+    """
+    Save/merge a scan result.
+
+    Important: main.py already inserts a scan_doc into MongoDB and then calls save_scan_result()
+    with a mock payload (including 'id'). To avoid duplicates, this function will UPDATE the
+    existing document when 'id' is provided and valid; otherwise it will INSERT a new document.
+    """
+    filename = result.get("filename", "unknown.csv")
+    score = result.get("score", result.get("compliance_score", 0))
+    pii_detected = result.get("pii_detected", result.get("pii_columns_found", []))
+    total_rows = result.get("total_rows", result.get("total_rows_scanned", 0))
+    pii_total_exposure = result.get("pii_count", result.get("pii_total_exposure", 0))
+
+    scan_doc = {
+        "filename": filename,
+        "compliance_score": int(score) if score is not None else 0,
+        "pii_detected": pii_detected if isinstance(pii_detected, list) else [],
+        "pii_total_exposure": int(pii_total_exposure) if pii_total_exposure is not None else 0,
+        "total_rows": int(total_rows) if total_rows is not None else 0,
+        "status": result.get("status", "completed"),
+        "created_at": result.get("created_at", datetime.utcnow()),
+    }
+
+    provided_id = result.get("id") or result.get("_id")
+    if provided_id and ObjectId is not None:
+        try:
+            oid = ObjectId(str(provided_id))
+            existing = await scans_col.find_one({"_id": oid})
+            if existing:
+                await scans_col.update_one({"_id": oid}, {"$set": scan_doc})
+                return str(oid)
+        except Exception:
+            pass
+
+    insert_result = await scans_col.insert_one(scan_doc)
+    return str(insert_result.inserted_id)

@@ -1,0 +1,6 @@
+﻿id,name,email,phone,ssn,salary,credit_card,address
+1,John Doe,john.doe@email.com,555-123-4567,123-45-6789,75000,4532-1234-5678-9012,123 Main St
+2,Jane Smith,jane.smith@email.com,555-987-6543,987-65-4321,85000,5412-9876-5432-1098,456 Oak Ave
+3,Bob Johnson,bob.j@company.com,555-456-7890,456-78-9012,95000,3782-8224-6310-0054,789 Pine Rd
+4,Alice Brown,alice.brown@corp.net,555-321-0987,321-09-8765,68000,6011-1111-1111-1117,321 Elm St
+5,Charlie Wilson,charlie.w@business.org,555-654-3210,654-32-1098,72000,3056-9309-0259-0443,654 Maple Dr

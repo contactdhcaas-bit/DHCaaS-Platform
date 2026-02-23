@@ -1,0 +1,4 @@
+﻿customer_id,email,phone,first_name,last_name,address,city,state,zip_code,salary,credit_card
+1,john.doe@email.com,555-1234,John,Doe,123 Main St,Boston,MA,02101,75000,4111111111111111
+2,jane.smith@email.com,555-5678,Jane,Smith,456 Oak Ave,Seattle,WA,98101,85000,5500000000000004
+3,bob.jones@email.com,555-9012,Bob,Jones,789 Pine Rd,Austin,TX,78701,65000,340000000000009

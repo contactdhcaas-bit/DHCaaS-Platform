@@ -1,0 +1,66 @@
+﻿{
+  "metadata": {
+    "client_name": "Enterprise Demo Corp",
+    "report_date": "February 5, 2026",
+    "scan_id": "SCAN-2026-0205-001",
+    "source_count": 12,
+    "total_records": 2547893
+  },
+  "summary": {
+    "overall_grade": "A",
+    "overall_score": 92,
+    "total_records": 2547893,
+    "source_count": 12,
+    "critical_issues": 3,
+    "medium_issues": 15,
+    "low_issues": 47
+  },
+  "quality_metrics": [
+    {
+      "dimension": "Completeness",
+      "score": 95,
+      "issues_found": 12
+    },
+    {
+      "dimension": "Accuracy",
+      "score": 88,
+      "issues_found": 8
+    },
+    {
+      "dimension": "Consistency",
+      "score": 92,
+      "issues_found": 15
+    },
+    {
+      "dimension": "Timeliness",
+      "score": 90,
+      "issues_found": 10
+    },
+    {
+      "dimension": "Validity",
+      "score": 94,
+      "issues_found": 5
+    }
+  ],
+  "compliance": {
+    "cndp_status": "Compliant",
+    "cndp_score": 96,
+    "cndp_review": "Q2 2026",
+    "gdpr_status": "Compliant",
+    "gdpr_score": 93,
+    "gdpr_review": "Q3 2026",
+    "iso_status": "In Progress",
+    "iso_score": 87,
+    "iso_review": "Q2 2026",
+    "soc2_status": "Compliant",
+    "soc2_score": 91,
+    "soc2_review": "Q4 2026"
+  },
+  "recommendations": [
+    "Implement automated data quality monitoring for the Customer database to reduce manual oversight by 60%",
+    "Establish data lineage tracking for PII fields to meet CNDP 09-08 Article 7 requirements",
+    "Deploy anomaly detection rules for transaction data to catch inconsistencies in real-time",
+    "Complete ISO 27001 documentation for data retention policies (Target: March 2026)",
+    "Upgrade encryption protocols for data at rest in legacy systems to AES-256 standard"
+  ]
+}

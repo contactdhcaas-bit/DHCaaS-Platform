@@ -1,0 +1,4 @@
+﻿email,salary,customer_name,city,user_id,created_at
+john@example.com,75000,John Doe,New York,1001,2024-01-01
+alice@test.com,85000,Alice Smith,London,1002,2024-01-02
+invalid-email,65000,Bob Johnson,Paris,1003,2024-01-03

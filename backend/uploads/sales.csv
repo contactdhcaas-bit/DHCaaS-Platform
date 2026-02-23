@@ -1,0 +1,15 @@
+﻿product_name,category,region,sales_date,customer_id,quantity,revenue,profit,discount
+Laptop,Electronics,North America,2026-01-15,CUST001,5,12500.00,3750.00,250.00
+Monitor,Electronics,Europe,2026-01-18,CUST002,10,3500.00,1050.00,150.00
+Keyboard,Peripherals,Asia,2026-01-20,CUST003,25,1250.00,625.00,50.00
+Mouse,Peripherals,North America,2026-01-22,CUST001,30,900.00,450.00,30.00
+Webcam,Electronics,Europe,2026-01-25,CUST004,8,1600.00,640.00,80.00
+Headset,Audio,Asia,2026-02-01,CUST005,15,2250.00,900.00,100.00
+Tablet,Electronics,South America,2026-02-05,CUST002,7,3500.00,1400.00,175.00
+Printer,Computing,North America,2026-02-08,CUST003,4,1600.00,480.00,80.00
+Laptop,Electronics,Europe,2026-02-10,CUST004,6,15000.00,4500.00,300.00
+Monitor,Electronics,Asia,2026-02-12,CUST001,12,4200.00,1260.00,180.00
+Keyboard,Peripherals,North America,2026-02-14,CUST005,20,1000.00,500.00,40.00
+Mouse,Peripherals,Europe,2026-02-15,CUST002,35,1050.00,525.00,35.00
+Webcam,Electronics,Asia,2026-02-16,CUST003,10,2000.00,800.00,100.00
+Headset,Audio,North America,2026-02-17,CUST004,18,2700.00,1080.00,120.00

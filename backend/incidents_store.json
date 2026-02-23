@@ -1,0 +1,141 @@
+{
+  "incidents": [
+    {
+      "id": "INC-2026-001",
+      "severity": "critical",
+      "title": "Unencrypted PII Data Detected in Public S3 Bucket",
+      "description": "Automated scan #SCAN-RAM-2026-001 discovered 1,247 customer records containing unencrypted credit card numbers (PAN) and CVV codes in s3://dhcaas-client-logs-public. Immediate remediation required per CNDP 09-08 Article 24 and PCI-DSS 3.2.1.",
+      "status": "acknowledged",
+      "source": "automated_scan",
+      "scan_id": "SCAN-RAM-2026-001",
+      "data_source": "AWS S3 (company-public-logs)",
+      "affected_records": 1247,
+      "regulatory_frameworks": [
+        "CNDP 09-08",
+        "PCI-DSS",
+        "GDPR"
+      ],
+      "created_at": "2026-02-05T10:15:32Z",
+      "acknowledged": true,
+      "acknowledged_at": "2026-02-05T15:04:52Z",
+      "acknowledged_by": "test@dhcaas.com",
+      "resolved_at": null,
+      "resolved_by": null,
+      "assignee": null,
+      "tags": [
+        "pii_exposure",
+        "encryption",
+        "s3_security",
+        "urgent"
+      ],
+      "resolution_notes": null
+    },
+    {
+      "id": "INC-2026-002",
+      "severity": "high",
+      "title": "GDPR Article 5 Violation - Data Retention Policy Breach",
+      "description": "Compliance engine detected 34,890 customer records in 'Legacy_Customer_DB' (PostgreSQL) exceeding GDPR's 5-year data retention limit. Records date back to 2018-2019 without valid legal basis for extended storage.",
+      "status": "acknowledged",
+      "source": "policy_engine",
+      "scan_id": "SCAN-COMP-2026-078",
+      "data_source": "PostgreSQL (Legacy_Customer_DB)",
+      "affected_records": 34890,
+      "regulatory_frameworks": [
+        "GDPR",
+        "CNDP 09-08"
+      ],
+      "created_at": "2026-02-04T15:30:18Z",
+      "acknowledged": true,
+      "acknowledged_at": "2026-02-04T16:45:22Z",
+      "acknowledged_by": "ahmed.bennani@dhcaas.com",
+      "resolved_at": null,
+      "resolved_by": null,
+      "assignee": "data-governance-team",
+      "tags": [
+        "gdpr_compliance",
+        "data_retention",
+        "legacy_system"
+      ],
+      "resolution_notes": null
+    },
+    {
+      "id": "INC-2026-003",
+      "severity": "medium",
+      "title": "Data Quality Degradation - 18% Null Values in Critical Fields",
+      "description": "Quality monitoring detected significant increase in null values for 'customer_email' (18.4%) and 'phone_number' (22.7%) fields in CRM database over the past 72 hours. Baseline threshold exceeded by 300%.",
+      "status": "acknowledged",
+      "source": "quality_monitor",
+      "scan_id": "SCAN-QA-2026-112",
+      "data_source": "MySQL (CRM_Production)",
+      "affected_records": 15670,
+      "regulatory_frameworks": [],
+      "created_at": "2026-02-05T08:20:45Z",
+      "acknowledged": true,
+      "acknowledged_at": "2026-02-05T15:30:33Z",
+      "acknowledged_by": "admin@dhcaas.com",
+      "resolved_at": null,
+      "resolved_by": null,
+      "assignee": null,
+      "tags": [
+        "data_quality",
+        "completeness",
+        "crm"
+      ],
+      "resolution_notes": null
+    },
+    {
+      "id": "INC-2026-004",
+      "severity": "low",
+      "title": "Schema Drift Detected in Analytics Warehouse",
+      "description": "Automated schema validation identified 3 undocumented column additions in 'customer_transactions' table. Changes made outside of standard change management process.",
+      "status": "resolved",
+      "source": "schema_monitor",
+      "scan_id": "SCAN-SCHEMA-2026-034",
+      "data_source": "Snowflake (Analytics_Warehouse)",
+      "affected_records": 0,
+      "regulatory_frameworks": [],
+      "created_at": "2026-02-03T11:15:00Z",
+      "acknowledged": true,
+      "acknowledged_at": "2026-02-03T14:30:12Z",
+      "acknowledged_by": "fatima.alaoui@dhcaas.com",
+      "resolved_at": "2026-02-04T09:45:33Z",
+      "resolved_by": "fatima.alaoui@dhcaas.com",
+      "assignee": "data-engineering-team",
+      "tags": [
+        "schema_drift",
+        "governance",
+        "documentation"
+      ],
+      "resolution_notes": "Schema changes documented retroactively. Added to data catalog. Process improvement ticket created (JIRA-4521)."
+    },
+    {
+      "id": "INC-2026-005",
+      "severity": "critical",
+      "title": "Cross-Border Data Transfer Without Adequate Safeguards",
+      "description": "Data lineage analysis revealed customer data from EU citizens being transferred to US-based servers without Standard Contractual Clauses (SCCs) or BCRs. Violates GDPR Article 46.",
+      "status": "resolved",
+      "source": "lineage_analyzer",
+      "scan_id": "SCAN-LINEAGE-2026-019",
+      "data_source": "Multi-region Pipeline (EU->US)",
+      "affected_records": 8920,
+      "regulatory_frameworks": [
+        "GDPR",
+        "Schrems II"
+      ],
+      "created_at": "2026-02-05T13:05:41Z",
+      "acknowledged": true,
+      "acknowledged_at": "2026-02-05T13:45:18Z",
+      "acknowledged_by": "youssef.idrissi@dhcaas.com",
+      "resolved_at": "2026-02-05T15:31:13Z",
+      "resolved_by": "admin@dhcaas.com",
+      "assignee": "legal-compliance-team",
+      "tags": [
+        "gdpr",
+        "cross_border",
+        "data_transfer",
+        "legal"
+      ],
+      "resolution_notes": "?? ????? ??????? ????? ??? ????? Pipeline"
+    }
+  ]
+}

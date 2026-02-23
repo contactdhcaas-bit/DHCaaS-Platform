@@ -1,0 +1,11 @@
+﻿id,name,email,phone,ssn,salary,credit_card,address
+1,John Doe,john.doe@email.com,555-123-4567,123-45-6789,75000,4532-1234-5678-9012,123 Main St
+2,Jane Smith,jane.smith@email.com,555-987-6543,987-65-4321,85000,5412-9876-5432-1098,456 Oak Ave
+3,Bob Johnson,bob.j@company.com,555-456-7890,456-78-9012,95000,3782-8224-6310-0054,789 Pine Rd
+4,Alice Brown,alice.brown@corp.net,555-321-0987,321-09-8765,68000,6011-1111-1111-1117,321 Elm St
+5,Charlie Wilson,charlie.w@business.org,555-654-3210,654-32-1098,72000,3056-9309-0259-0443,654 Maple Dr
+6,David Lee,david.lee@tech.com,555-111-2222,111-22-3333,82000,4916-1234-5678-9012,111 Tech Blvd
+7,Emma Davis,emma.d@startup.io,555-333-4444,333-44-5555,91000,5500-1234-5678-9012,222 Innovation Way
+8,Frank Miller,frank.m@enterprise.com,555-555-6666,555-66-7777,78000,3714-1234-5678-9012,333 Business Park
+9,Grace Taylor,grace.t@consulting.net,555-777-8888,777-88-9999,88000,6011-2222-3333-4444,444 Consultant Ave
+10,Henry Clark,henry.c@finance.org,555-999-0000,999-00-1111,125000,3782-5555-6666-7777,555 Wall Street

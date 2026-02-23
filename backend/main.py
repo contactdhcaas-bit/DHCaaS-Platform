@@ -1,201 +1,316 @@
-from __future__ import annotations
-from datetime import datetime, timezone
-from typing import List, Literal, Optional, Dict
-import uuid
-from fastapi import FastAPI, Query
+﻿"""
+DHCaaS Backend - Main Application Entry Point
+Enterprise Data Health Check as a Service API
+
+This is the main FastAPI application that orchestrates all API routes,
+middleware, and application configuration.
+
+Author: DHCaaS Platform Team
+Date: 2026-02-04
+Version: 1.0.0
+"""
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+from datetime import datetime
 
-ProcessingType = Literal["async"]
-JobStatus = Literal["queued", "uploading", "running", "completed", "failed"]
-GdprRiskLevel = Literal["low", "medium", "high"]
+# Import routers
+from app.api.v1.api import api_router
 
-
-class ScanJobMeta(BaseModel):
-    filename: str
-    uploadtimestamp: str  # ISO string
-    filesizebytes: int
-    processingtype: ProcessingType = "async"
+# Import database functions
+from app.database import connect_to_mongo, close_mongo_connection
 
 
-class QualityMetrics(BaseModel):
-    completenessscore: float
-    accuracyscore: float
-    consistencyscore: float
-    totalrows: int
-    missingvaluescount: int
+# ===== APPLICATION CONFIGURATION =====
+app = FastAPI(
+    title="DHCaaS API",
+    description="""
+    ## Data Health Check as a Service - Enterprise Backend
 
+    **DHCaaS** provides comprehensive data quality monitoring, governance,
+    and compliance management for enterprise data teams.
 
-class ComplianceCheck(BaseModel):
-    piidetected: bool
-    sensitivefieldsfound: List[str]
-    gdprrisklevel: GdprRiskLevel
+    ### Key Features:
+    - 📊 **Data Quality Scanning** - Multi-dimensional quality analysis
+    - 🛡️ **Compliance Monitoring** - GDPR, CCPA, HIPAA compliance checks
+    - 🤖 **Predictive Analytics** - ML-powered anomaly detection
+    - 📈 **Quality Metrics** - Completeness, validity, consistency, accuracy
+    - 🔍 **PII Detection** - Automatic sensitive data identification
+    - 📄 **PDF Reports** - Professional compliance reports
 
+    ### API Versions:
+    - **v1**: Current stable version (documented here)
 
-class PredictiveAnalysis(BaseModel):
-    healthscore: int
-    anomalydetected: bool
-    anomalies: List[str]
+    ### Authentication:
+    - Currently: Open API (development mode)
+    - Production: OAuth 2.0 / JWT-based authentication
 
-
-class ScanJob(BaseModel):
-    jobid: str
-    status: JobStatus
-    meta: ScanJobMeta
-    qualitymetrics: Optional[QualityMetrics] = None
-    compliancecheck: Optional[ComplianceCheck] = None
-    predictiveanalysis: Optional[PredictiveAnalysis] = None
-    error: Optional[str] = None
-
-
-class CreateScanJobRequest(BaseModel):
-    filename: str
-    filesizebytes: int
-
-
-class CreateScanJobResponse(BaseModel):
-    job: ScanJob
-    uploadUrl: str
-
-
-class ListScanJobsResponse(BaseModel):
-    items: List[ScanJob]
-    total: int
-    limit: int
-    offset: int
-
-
-# in-memory "DB"
-class _JobState(BaseModel):
-    job: ScanJob
-    stage: int = 0  # 0 queued, 1 uploading, 2 running, 3 completed
-
-
-JOBS: Dict[str, _JobState] = {}
-
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _mock_presigned_url(jobid: str) -> str:
-    # Later this becomes a real S3 presigned URL.
-    return f"mock-presigned://upload/{jobid}"
-
-
-def _advance(status: JobStatus) -> JobStatus:
-    if status == "queued":
-        return "uploading"
-    if status == "uploading":
-        return "running"
-    if status == "running":
-        return "completed"
-    return status
-
-
-def _attach_results(job: ScanJob) -> None:
-    if job.qualitymetrics is not None:
-        return
-
-    job.qualitymetrics = QualityMetrics(
-        completenessscore=98.5,
-        accuracyscore=95.2,
-        consistencyscore=99.0,
-        totalrows=15000,
-        missingvaluescount=25,
-    )
-
-    job.compliancecheck = ComplianceCheck(
-        piidetected=True,
-        sensitivefieldsfound=["email", "phone"],
-        gdprrisklevel="high",
-    )
-
-    job.predictiveanalysis = PredictiveAnalysis(
-        healthscore=88,
-        anomalydetected=False,
-        anomalies=[],
-    )
-
-
-app = FastAPI(title="DHCaaS Local Backend", version="0.1.0")
-
-# CORS (allow only dev frontends)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3003",
-        "http://127.0.0.1:3003",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    ### Support:
+    - Documentation: [https://docs.dhcaas.com](https://docs.dhcaas.com)
+    - Email: [support@dhcaas.com](mailto:support@dhcaas.com)
+    """,
+    version="1.0.0",
+    contact={
+        "name": "DHCaaS Platform Team",
+        "email": "support@dhcaas.com",
+        "url": "https://dhcaas.com"
+    },
+    license_info={
+        "name": "Proprietary",
+        "url": "https://dhcaas.com/license"
+    },
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/api/v1/openapi.json",
 )
 
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+# ===== CORS MIDDLEWARE CONFIGURATION =====
+# Configure Cross-Origin Resource Sharing for frontend integration
+origins = [
+    "http://localhost:5173",      # Vite dev server
+    "http://127.0.0.1:5173",      # Vite dev server (alt)
+    "http://localhost:3000",      # Alternative frontend port
+    "http://127.0.0.1:3000",      # Alternative frontend port (alt)
+    # Add production origins here:
+    # "https://app.dhcaas.com",
+    # "https://dhcaas.vercel.app",
+]
 
-@app.get("/scan-jobs", response_model=ListScanJobsResponse)
-def list_scan_jobs(
-    limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-):
-    # newest first by uploadtimestamp
-    all_jobs = sorted(
-        (state.job for state in JOBS.values()),
-        key=lambda j: j.meta.uploadtimestamp,
-        reverse=True,
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],  # Allows all headers
+    expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
+)
+
+
+# ===== INCLUDE API ROUTERS =====
+# Mount v1 API routers
+app.include_router(
+    api_router,
+    prefix="/api/v1"
+)
+
+
+# ===== ROOT ENDPOINTS =====
+
+@app.get("/", tags=["root"])
+async def read_root():
+    """
+    Root endpoint - API welcome message.
+
+    Returns basic information about the API and links to documentation.
+    """
+    return {
+        "message": "DHCaaS Enterprise API is Running 🚀",
+        "service": "Data Health Check as a Service",
+        "version": "1.0.0",
+        "status": "operational",
+        "timestamp": datetime.utcnow().isoformat(),
+        "documentation": {
+            "swagger_ui": "/docs",
+            "redoc": "/redoc",
+            "openapi_json": "/api/v1/openapi.json"
+        },
+        "endpoints": {
+            "health": "/health",
+            "scan_jobs": "/api/v1/scan-jobs",
+            "reports": "/api/v1/reports"
+        },
+        "support": {
+            "email": "support@dhcaas.com",
+            "docs": "https://docs.dhcaas.com"
+        }
+    }
+
+
+@app.get("/health", tags=["health"])
+async def health_check():
+    """
+    Health check endpoint for monitoring and load balancers.
+
+    Returns the operational status of the API service.
+    This endpoint should be used by:
+    - Docker health checks
+    - Kubernetes liveness/readiness probes
+    - Load balancers
+    - Monitoring systems (Datadog, New Relic, etc.)
+
+    Returns:
+        dict: Service health status and metadata
+    """
+    return {
+        "status": "healthy",
+        "service": "dhcaas-backend",
+        "version": "1.0.0",
+        "timestamp": datetime.utcnow().isoformat(),
+        "checks": {
+            "api": "operational",
+            # TODO: Add database health check
+            # "database": "connected",
+            # TODO: Add cache health check
+            # "cache": "connected",
+        }
+    }
+
+
+@app.get("/api/v1/info", tags=["info"])
+async def api_info():
+    """
+    API information endpoint.
+
+    Provides detailed information about the API version, capabilities,
+    and available endpoints.
+
+    Returns:
+        dict: Comprehensive API metadata
+    """
+    return {
+        "api_version": "1.0.0",
+        "service": "DHCaaS",
+        "description": "Data Health Check as a Service - Enterprise Backend",
+        "features": [
+            "Data Quality Scanning",
+            "Compliance Monitoring (GDPR/CCPA/HIPAA)",
+            "Predictive Analytics",
+            "PII Detection",
+            "PDF Report Generation",
+            "Incident Management",
+            "Policy Enforcement"
+        ],
+        "supported_data_sources": [
+            "CSV Upload",
+            "MySQL",
+            "PostgreSQL",
+            "MongoDB",
+            "Snowflake",
+            "BigQuery",
+            "Redshift",
+            "S3",
+            "Azure Blob Storage"
+        ],
+        "authentication": {
+            "current": "Open (Development Mode)",
+            "production": "OAuth 2.0 / JWT"
+        },
+        "rate_limits": {
+            "default": "1000 requests/hour",
+            "burst": "100 requests/minute"
+        },
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+# ===== EXCEPTION HANDLERS =====
+
+@app.exception_handler(404)
+async def not_found_handler(request, exc):
+    """Custom 404 error handler"""
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "Not Found",
+            "message": f"The requested resource '{request.url.path}' was not found",
+            "status_code": 404,
+            "timestamp": datetime.utcnow().isoformat(),
+            "documentation": "/docs"
+        }
     )
-    total = len(all_jobs)
-    items = all_jobs[offset : offset + limit]
-    return ListScanJobsResponse(items=items, total=total, limit=limit, offset=offset)
 
 
-
-@app.post("/scan-jobs", response_model=CreateScanJobResponse)
-def create_scan_job(payload: CreateScanJobRequest):
-    jobid = str(uuid.uuid4())
-    job = ScanJob(
-        jobid=jobid,
-        status="queued",
-        meta=ScanJobMeta(
-            filename=payload.filename,
-            uploadtimestamp=_now_iso(),
-            filesizebytes=payload.filesizebytes,
-            processingtype="async",
-        ),
+@app.exception_handler(500)
+async def internal_server_error_handler(request, exc):
+    """Custom 500 error handler"""
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal Server Error",
+            "message": "An unexpected error occurred. Please contact support if this persists.",
+            "status_code": 500,
+            "timestamp": datetime.utcnow().isoformat(),
+            "support": "support@dhcaas.com"
+        }
     )
-    JOBS[jobid] = _JobState(job=job, stage=0)
-    return CreateScanJobResponse(job=job, uploadUrl=_mock_presigned_url(jobid))
 
 
-@app.get("/scan-jobs/{jobid}", response_model=ScanJob)
-def get_scan_job(jobid: str):
-    state = JOBS.get(jobid)
-    if not state:
-        return ScanJob(
-            jobid=jobid,
-            status="failed",
-            meta=ScanJobMeta(
-                filename="unknown",
-                uploadtimestamp=_now_iso(),
-                filesizebytes=0,
-                processingtype="async",
-            ),
-            error="Job not found",
-        )
+# ===== STARTUP/SHUTDOWN EVENTS =====
 
-    # Progress on each poll (simple local simulation)
-    if state.stage < 3:
-        state.stage += 1
-        state.job.status = _advance(state.job.status)
+@app.on_event("startup")
+async def startup_event():
+    """
+    Application startup event handler.
 
-    if state.job.status == "completed":
-        _attach_results(state.job)
+    Executes when the FastAPI application starts.
+    Use this for:
+    - Database connection initialization
+    - Cache warming
+    - Loading ML models
+    - Starting background tasks
+    """
+    print("=" * 60)
+    print("🚀 DHCaaS API Starting...")
+    print("=" * 60)
+    print(f"📦 Version: 1.0.0")
+    print(f"🌐 CORS Origins: {', '.join(origins)}")
+    print(f"📚 Documentation: http://localhost:8000/docs")
+    print(f"💚 Health Check: http://localhost:8000/health")
+    print("=" * 60)
 
-    JOBS[jobid] = state
-    return state.job
+    # Initialize MongoDB connection
+    await connect_to_mongo()
+
+    # TODO: Initialize Redis cache
+    # await redis_cache.connect()
+
+    # TODO: Load ML models
+    # await ml_models.load()
+
+    print("✅ DHCaaS API Started Successfully!")
+    print("=" * 60)
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    Application shutdown event handler.
+
+    Executes when the FastAPI application stops.
+    Use this for:
+    - Closing database connections
+    - Cleaning up resources
+    - Saving state
+    - Graceful background task termination
+    """
+    print("=" * 60)
+    print("🛑 DHCaaS API Shutting Down...")
+    print("=" * 60)
+
+    # Close MongoDB connection
+    await close_mongo_connection()
+
+    # TODO: Close Redis cache
+    # await redis_cache.disconnect()
+
+    print("✅ DHCaaS API Stopped Successfully!")
+    print("=" * 60)
+
+
+# ===== MAIN ENTRY POINT =====
+if __name__ == "__main__":
+    import uvicorn
+
+    # Run the application directly (for development)
+    # In production, use: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,  # Auto-reload on code changes (dev only)
+        log_level="info",
+        access_log=True,
+    )

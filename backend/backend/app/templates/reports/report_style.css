@@ -1,0 +1,463 @@
+/* ============================================================================
+   DHCaaS Enterprise Report Stylesheet
+   Version: 2.0 (HTML-First Architecture)
+   Optimized for: PDF Generation (WeasyPrint/PDFKit compatible)
+   ============================================================================ */
+
+/* ============================= ROOT VARIABLES ============================= */
+:root {
+    /* Brand Colors */
+    --primary-blue: #0066CC;
+    --primary-dark: #003D7A;
+    --accent-orange: #FF6B35;
+    
+    /* Severity Colors */
+    --critical-red: #D32F2F;
+    --high-orange: #F57C00;
+    --medium-yellow: #FBC02D;
+    --low-green: #388E3C;
+    
+    /* Neutral Palette */
+    --gray-900: #212121;
+    --gray-700: #616161;
+    --gray-500: #9E9E9E;
+    --gray-300: #E0E0E0;
+    --gray-100: #F5F5F5;
+    --white: #FFFFFF;
+    
+    /* Typography */
+    --font-primary: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+}
+
+/* ============================= GLOBAL RESET ============================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-primary);
+    font-size: 11pt;
+    line-height: 1.6;
+    color: var(--gray-900);
+    background-color: var(--white);
+}
+
+/* ============================= PAGE LAYOUT ============================= */
+.report-container {
+    max-width: 210mm; /* A4 width */
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+    background: var(--white);
+}
+
+/* ============================= HEADER SECTION ============================= */
+.report-header {
+    border-bottom: 4px solid var(--primary-blue);
+    padding-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.report-header h1 {
+    font-size: 28pt;
+    font-weight: 700;
+    color: var(--primary-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.report-subtitle {
+    font-size: 14pt;
+    color: var(--gray-700);
+    font-weight: 400;
+}
+
+.report-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--spacing-md);
+    font-size: 10pt;
+    color: var(--gray-700);
+}
+
+.report-meta-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.report-meta-label {
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    font-size: 8pt;
+    letter-spacing: 0.5px;
+}
+
+.report-meta-value {
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-top: var(--spacing-xs);
+}
+
+/* ============================= SMART SCORE CARD ============================= */
+.smart-score-section {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+    color: var(--white);
+    padding: var(--spacing-lg);
+    border-radius: 8px;
+    margin-bottom: var(--spacing-xl);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.smart-score-header {
+    font-size: 16pt;
+    font-weight: 700;
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.score-display {
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.score-value {
+    font-size: 48pt;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.score-grade {
+    display: inline-block;
+    background: var(--white);
+    color: var(--primary-dark);
+    font-size: 24pt;
+    font-weight: 700;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: 4px;
+    margin-left: var(--spacing-md);
+}
+
+.score-breakdown {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.breakdown-item {
+    background: rgba(255, 255, 255, 0.15);
+    padding: var(--spacing-md);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.breakdown-label {
+    font-size: 9pt;
+    opacity: 0.9;
+    margin-bottom: var(--spacing-xs);
+}
+
+.breakdown-value {
+    font-size: 18pt;
+    font-weight: 700;
+}
+
+/* ============================= KEY METRICS GRID ============================= */
+.key-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.metric-card {
+    background: var(--gray-100);
+    padding: var(--spacing-md);
+    border-left: 4px solid var(--primary-blue);
+    border-radius: 4px;
+}
+
+.metric-card.critical {
+    border-left-color: var(--critical-red);
+}
+
+.metric-label {
+    font-size: 9pt;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-xs);
+}
+
+.metric-value {
+    font-size: 24pt;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+/* ============================= SECTION HEADERS ============================= */
+.section {
+    margin-bottom: var(--spacing-xl);
+    page-break-inside: avoid;
+}
+
+.section-title {
+    font-size: 18pt;
+    font-weight: 700;
+    color: var(--primary-dark);
+    border-bottom: 2px solid var(--primary-blue);
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.section-subtitle {
+    font-size: 14pt;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+}
+
+/* ============================= QUALITY DIMENSIONS ============================= */
+.quality-dimensions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+}
+
+.dimension-card {
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    padding: var(--spacing-md);
+}
+
+.dimension-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.dimension-name {
+    font-size: 12pt;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.dimension-score {
+    font-size: 20pt;
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.dimension-status {
+    font-size: 9pt;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+.dimension-status.excellent {
+    background: var(--low-green);
+    color: var(--white);
+}
+
+.dimension-status.good {
+    background: var(--medium-yellow);
+    color: var(--gray-900);
+}
+
+.dimension-status.fair {
+    background: var(--high-orange);
+    color: var(--white);
+}
+
+.dimension-description {
+    font-size: 9pt;
+    color: var(--gray-700);
+    margin-top: var(--spacing-sm);
+}
+
+/* Progress bar for dimensions */
+.dimension-progress {
+    height: 8px;
+    background: var(--gray-300);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: var(--spacing-sm);
+}
+
+.dimension-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+    transition: width 0.3s ease;
+}
+
+/* ============================= TABLES ============================= */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--spacing-md);
+    font-size: 10pt;
+}
+
+.data-table thead {
+    background: var(--primary-dark);
+    color: var(--white);
+}
+
+.data-table th {
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: left;
+    font-weight: 600;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--gray-300);
+}
+
+.data-table tbody tr:nth-child(even) {
+    background: var(--gray-100);
+}
+
+.data-table tbody tr:hover {
+    background: var(--gray-300);
+}
+
+/* Severity badges in tables */
+.severity-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.severity-badge.critical {
+    background: var(--critical-red);
+    color: var(--white);
+}
+
+.severity-badge.high {
+    background: var(--high-orange);
+    color: var(--white);
+}
+
+.severity-badge.medium {
+    background: var(--medium-yellow);
+    color: var(--gray-900);
+}
+
+.severity-badge.low {
+    background: var(--low-green);
+    color: var(--white);
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.open {
+    background: var(--critical-red);
+    color: var(--white);
+}
+
+.status-badge.acknowledged {
+    background: var(--high-orange);
+    color: var(--white);
+}
+
+.status-badge.resolved {
+    background: var(--low-green);
+    color: var(--white);
+}
+
+/* ============================= CODE BLOCKS ============================= */
+.code-block {
+    background: var(--gray-900);
+    color: #00FF00;
+    font-family: var(--font-mono);
+    font-size: 9pt;
+    padding: var(--spacing-md);
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: var(--spacing-sm) 0;
+}
+
+/* ============================= FOOTER ============================= */
+.report-footer {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-md);
+    border-top: 2px solid var(--gray-300);
+    text-align: center;
+    font-size: 9pt;
+    color: var(--gray-700);
+}
+
+/* ============================= PRINT OPTIMIZATION ============================= */
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .report-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 15mm;
+    }
+    
+    .section {
+        page-break-inside: avoid;
+    }
+    
+    .data-table {
+        page-break-inside: avoid;
+    }
+    
+    .data-table thead {
+        display: table-header-group;
+    }
+    
+    .data-table tbody tr {
+        page-break-inside: avoid;
+    }
+    
+    /* Ensure colors print correctly */
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* ============================= UTILITY CLASSES ============================= */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-bold { font-weight: 700; }
+.text-muted { color: var(--gray-700); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.mt-lg { margin-top: var(--spacing-lg); }

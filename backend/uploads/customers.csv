@@ -1,0 +1,11 @@
+﻿customer_name,segment,country,city,join_date,total_purchases,lifetime_value,order_count
+John Smith,Enterprise,USA,New York,2025-01-15,45,125000.50,12
+Jane Doe,SMB,UK,London,2025-03-20,28,78500.75,8
+Bob Johnson,Startup,Germany,Berlin,2024-11-10,15,35000.25,5
+Alice Williams,Enterprise,France,Paris,2025-06-05,52,156000.00,15
+Charlie Brown,Individual,Japan,Tokyo,2024-09-18,8,12500.00,3
+David Lee,SMB,Canada,Toronto,2025-02-28,32,89000.50,10
+Emma Wilson,Enterprise,USA,San Francisco,2024-12-01,60,185000.75,18
+Frank Miller,Startup,UK,Manchester,2025-04-12,12,28000.00,4
+Grace Davis,SMB,Germany,Munich,2025-05-22,25,67500.25,7
+Henry Taylor,Individual,France,Lyon,2025-07-08,5,8500.00,2

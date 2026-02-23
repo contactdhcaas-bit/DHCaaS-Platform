@@ -1,0 +1,102 @@
+# app/api/v1/endpoints/dashboard.py
+"""
+Dashboard Statistics Endpoints
+Provides aggregated metrics for the main dashboard.
+"""
+
+from fastapi import APIRouter, Header
+from typing import Optional
+from app.core.database import get_database
+
+router = APIRouter()
+
+
+@router.get("/stats")
+async def get_dashboard_stats(authorization: Optional[str] = Header(None)):
+    """
+    Get dashboard statistics.
+    
+    Returns:
+    - Total scans
+    - Active incidents
+    - Data sources
+    - Total assets
+    - Recent activity
+    
+    **Permissions:** Open to all users (guest mode enabled)
+    """
+    # Default guest user
+    user = {
+        "email": "guest@dhcaas.com",
+        "user_id": "guest",
+        "role": "viewer",
+        "full_name": "Guest User"
+    }
+    
+    try:
+        # Count total scans
+        total_scans = await scans_col.count_documents({})
+        
+        # Count active incidents
+        active_incidents = await incidents_col.count_documents({"status": {"$ne": "resolved"}})
+        
+        # Count data sources
+        total_sources = await sources_col.count_documents({})
+        
+        # Count total assets
+        total_assets = await assets_col.count_documents({})
+        
+        # Get recent scans (last 5)
+        recent_scans = await scans_col.find().sort("created_at", -1).limit(5).to_list(5)
+        
+        # Get recent incidents (last 5)
+        recent_incidents = await incidents_col.find().sort("created_at", -1).limit(5).to_list(5)
+        
+        return {
+            "stats": {
+                "total_scans": total_scans,
+                "active_incidents": active_incidents,
+                "total_sources": total_sources,
+                "total_assets": total_assets,
+            },
+            "recent_scans": [
+                {
+                    "id": str(scan["_id"]),
+                    "name": scan.get("name", "Unnamed Scan"),
+                    "status": scan.get("status", "unknown"),
+                    "created_at": scan.get("created_at"),
+                }
+                for scan in recent_scans
+            ],
+            "recent_incidents": [
+                {
+                    "id": str(incident["_id"]),
+                    "title": incident.get("title", "Untitled Incident"),
+                    "severity": incident.get("severity", "low"),
+                    "status": incident.get("status", "open"),
+                    "created_at": incident.get("created_at"),
+                }
+                for incident in recent_incidents
+            ],
+            "user": {
+                "email": user.get("email"),
+                "role": user.get("role"),
+                "full_name": user.get("full_name"),
+            }
+        }
+        
+    except Exception as e:
+        return {
+            "stats": {
+                "total_scans": 0,
+                "active_incidents": 0,
+                "total_sources": 0,
+                "total_assets": 0,
+            },
+            "recent_scans": [],
+            "recent_incidents": [],
+            "error": str(e),
+            "user": user
+        }
+
+

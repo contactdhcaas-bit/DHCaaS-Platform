@@ -1,0 +1,16 @@
+﻿id,name,email,phone,ssn,credit_card,address,city,country
+1,Ahmed Hassan,ahmed@example.com,+212600111111,123-45-6789,4532-1234-5678-9010,Rue Hassan II,Casablanca,Morocco
+2,Fatima Zahra,fatima@example.com,+212600222222,987-65-4321,5425-2345-6789-0123,Avenue Mohammed V,Rabat,Morocco
+3,Mohamed Ali,mohamed@example.com,+212600333333,456-78-9012,4916-3456-7890-1234,Boulevard Zerktouni,Marrakech,Morocco
+4,Sarah Ahmed,sarah@example.com,+201012345678,234-56-7890,4024-4567-8901-2345,Tahrir Square,Cairo,Egypt
+5,Youssef Omar,youssef@example.com,+216987654321,345-67-8901,3530-5678-9012-3456,Avenue Habib Bourguiba,Tunis,Tunisia
+6,Amira Mansour,amira@example.com,+213551234567,567-89-0123,6011-6789-0123-4567,Rue Didouche Mourad,Algiers,Algeria
+7,Karim Benali,karim@example.com,+212600777777,678-90-1234,3566-7890-1234-5678,Corniche Ain Diab,Casablanca,Morocco
+8,Nadia Hassan,nadia@example.com,+971501234567,789-01-2345,5019-8901-2345-6789,Sheikh Zayed Road,Dubai,UAE
+9,Omar Abdullah,omar@example.com,+966501234567,890-12-3456,4485-9012-3456-7890,King Fahd Road,Riyadh,Saudi Arabia
+10,Laila Ibrahim,laila@example.com,+212600999999,901-23-4567,4532-0123-4567-8901,Rue de la Liberté,Tangier,Morocco
+11,Hassan Mahmoud,hassan@example.com,+212600888888,012-34-5678,5425-1234-5678-9012,Avenue des FAR,Fes,Morocco
+12,Samira Khalil,samira@example.com,+201098765432,123-98-7654,4916-2345-6789-0123,Corniche Alexandria,Alexandria,Egypt
+13,Tariq Mansour,tariq@example.com,+216123456789,234-87-6543,4024-3456-7890-1234,Avenue de la République,Sfax,Tunisia
+14,Leila Bennis,leila@example.com,+213661234567,345-76-5432,3530-4567-8901-2345,Boulevard de la Victoire,Oran,Algeria
+15,Rachid Amrani,rachid@example.com,+212600555555,456-65-4321,6011-5678-9012-3456,Boulevard Anfa,Casablanca,Morocco

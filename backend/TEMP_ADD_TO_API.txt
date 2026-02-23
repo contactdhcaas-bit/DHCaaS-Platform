@@ -1,0 +1,5 @@
+﻿# Add this to your existing API router file:
+from app.api.v1.endpoints import lineage
+
+# In your api_router.include_router() calls:
+api_router.include_router(lineage.router, prefix="/api/v1", tags=["lineage"])
