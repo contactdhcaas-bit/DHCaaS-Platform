@@ -16,7 +16,9 @@ from app.api.v1.endpoints import (
     policies,
     datasets,
     governance,
-    audit
+    audit,
+    analysis,
+    connectors
 )
 
 
@@ -101,4 +103,20 @@ api_router.include_router(
     audit.router,
     prefix="/audit",
     tags=["Audit Logs"]
+)
+
+
+# ===== AI CLASSIFICATION ENDPOINTS =====
+api_router.include_router(
+    analysis.router,
+    prefix="/analysis",
+    tags=["AI Classification"]
+)
+
+
+# ===== CLOUD CONNECTORS ENDPOINTS =====
+api_router.include_router(
+    connectors.router,
+    prefix="/connectors",
+    tags=["Cloud Connectors"]
 )
