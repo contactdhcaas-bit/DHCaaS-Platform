@@ -45,3 +45,25 @@ export interface CreateScanJobResponse {
   job: ScanJob;
   uploadUrl: string;
 }
+// Add to src/types/scanJob.ts
+
+export type ViolationSeverity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+
+export interface Violation {
+  id: string;
+  policy_id: string;
+  policy_name: string;
+  scan_id: string;
+  severity: ViolationSeverity;
+  message: string;
+  detected_at: string;
+  resolved: boolean;
+  rule_type: string;
+  threshold: number;
+  actual_value: {
+    score?: number;
+    pii_count?: number;
+    duplicate_count?: number;
+    missing_percent?: number;
+  };
+}

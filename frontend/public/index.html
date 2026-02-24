@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr-MA">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DHCaaS Console - Conformité CNDP | BMCE | Law 09-08</title>
+  <meta name="description" content="Data Health Check as a Service - CNIE/PII/GDPR scanning pour BMCE, Maroc Telecom, Public Sector" />
+  <meta name="keywords" content="DHCaaS, CNDP, Law 09-08, GDPR Maroc, BMCE, WafaCash, CNIE" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <link rel="manifest" href="/manifest.json" />
+  
+  <!-- PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="DHCaaS">
+  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMwRUE1RTkiLz4KPHRleHQgeD0iOTYiIHk9IjExMiIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjYwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+RkhDPC90ZXh0Pgo8L3N2Zz4K">
+  
+  <!-- Open Graph BMCE -->
+  <meta property="og:title" content="DHCaaS Console - Conformité CNDP Maroc" />
+  <meta property="og:description" content="Law 09-08 + GDPR compliance scanning" />
+  <meta property="og:image" content="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIHZpZXdCb3g9IjAgMCAxMjAwIDYzMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjMwIiBmaWxsPSIjMEVBNUU5Ii8+Cjx0ZXh0IHg9IjYwMCIgeT0iMzE1IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5ESENhYXMgQ29uc29sZTwvdGV4dD4KPC9zdmc+Cg==" />
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+  
+  <!-- PWA Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW registered: ', reg))
+          .catch(reg => console.log('SW failed: ', reg));
+      });
+    }
+  </script>
+</body>
+</html>

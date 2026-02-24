@@ -1,0 +1,118 @@
+﻿// src/App.tsx
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Layout from './components/layout/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Marketing Pages
+import LandingPage from './pages/LandingPage';
+import PricingPage from './pages/PricingPage';
+import RequestDemoPage from './pages/RequestDemoPage';
+
+// Auth Pages
+import LoginPage from './pages/LoginPage';
+
+// Application Pages (Existing)
+import DashboardPage from './pages/DashboardPage';
+import ReportsPage from './pages/ReportsPage';
+import PipelinesPage from './pages/PipelinesPage';
+import SettingsPage from './pages/SettingsPage';
+import TeamPage from './pages/TeamPage';
+
+// Application Pages (Newly Created)
+import DataQualityPage from './pages/DataQualityPage';
+import DataLineagePage from './pages/DataLineagePage';
+import CatalogPage from './pages/CatalogPage';
+import CatalogDetailsPage from './pages/CatalogDetailsPage';
+import GlossaryPage from './pages/GlossaryPage';
+import IncidentsPage from './pages/IncidentsPage';
+import PoliciesPage from './pages/PoliciesPage';
+import ComplianceOverviewPage from './pages/ComplianceOverviewPage';
+import ScheduledScansPage from './pages/ScheduledScansPage';
+import UploadPage from './pages/UploadPage';
+import ProfilePage from './pages/ProfilePage';
+import MarketplacePage from './pages/MarketplacePage';
+import EnrichmentPage from './pages/EnrichmentPage';
+import SecurityPage from './pages/SecurityPage';
+import NewScanPage from './pages/NewScanPage';
+
+// AI, ETL & Governance Pages
+import AIClassificationPage from './pages/AIClassificationPage';
+import IntegrationPage from './pages/IntegrationPage';
+import GovernancePage from './pages/GovernancePage';
+
+// Master Data Management Pages
+import MDMIndex from './pages/mdm/index';
+
+// Developer Portal
+import DevelopersPage from './pages/DevelopersPage';
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <Routes>
+        {/* PUBLIC ROUTES (No Authentication Required) */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/request-demo" element={<RequestDemoPage />} />
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* PROTECTED ROUTES (Authentication Required) */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          {/* Core Dashboard & Management */}
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/upload" element={<UploadPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/pipelines" element={<PipelinesPage />} />
+          <Route path="/team" element={<TeamPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/enrichment" element={<EnrichmentPage />} />
+          <Route path="/security" element={<SecurityPage />} />
+
+          {/* Data Governance Suite */}
+          <Route path="/quality/:jobId?" element={<DataQualityPage />} />
+          <Route path="/lineage" element={<DataLineagePage />} />
+          <Route path="/catalog" element={<CatalogPage />} />
+          <Route path="/catalog/:assetId" element={<CatalogDetailsPage />} />
+          <Route path="/glossary" element={<GlossaryPage />} />
+          <Route path="/incidents" element={<IncidentsPage />} />
+          <Route path="/policies" element={<PoliciesPage />} />
+          <Route path="/compliance-overview" element={<ComplianceOverviewPage />} />
+          <Route path="/scheduled-scans" element={<ScheduledScansPage />} />
+
+          {/* Scanning Engine */}
+          <Route path="/scans/new" element={<NewScanPage />} />
+
+          {/* AI Classification */}
+          <Route path="/analysis" element={<AIClassificationPage />} />
+
+          {/* Data Integration & ETL */}
+          <Route path="/integration" element={<IntegrationPage />} />
+
+          {/* Data Governance & Policy Engine */}
+          <Route path="/governance" element={<GovernancePage />} />
+
+          {/* Master Data Management */}
+          <Route path="/mdm" element={<MDMIndex />} />
+
+          {/* Developer Portal */}
+          <Route path="/developers" element={<DevelopersPage />} />
+        </Route>
+
+        {/* FALLBACK ROUTE */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthProvider>
+  );
+};
+
+export default App;

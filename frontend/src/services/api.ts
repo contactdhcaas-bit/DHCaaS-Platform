@@ -1,100 +1,141 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
-import { useAuthStore } from "@/store/authStore";
-import { useOrgStore } from "@/store/orgStore";
-import toast from "react-hot-toast";
+﻿// src/services/api.ts
+// DHCaaS API Service Layer - Unified Axios Client
+// Centralized API client for all backend communication
 
-class ApiClient {
-  private client: AxiosInstance;
+import axios, { AxiosInstance, AxiosError } from 'axios';
 
-  constructor() {
-    this.client = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1",
-      timeout: 30000,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+// ===== BASE CONFIGURATION =====
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_VERSION = '/api/v1';
 
-    this.setupInterceptors();
-  }
+// ===== AXIOS INSTANCE =====
+const apiClient: AxiosInstance = axios.create({
+  baseURL: `${API_BASE_URL}${API_VERSION}`,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-  private setupInterceptors() {
-    // Request interceptor
-    this.client.interceptors.request.use(
-      (config) => {
-        const token = useAuthStore.getState().token;
-        const organizationId = useOrgStore.getState().currentOrganization?.id;
+// ===== REQUEST INTERCEPTOR (Add Auth Token) =====
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-
-        if (organizationId) {
-          config.headers["X-Organization-ID"] = organizationId;
-        }
-
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    // Response interceptor
-    this.client.interceptors.response.use(
-      (response) => response,
-      (error: AxiosError) => {
-        const status: number | undefined = error.response?.status;
-
-        switch (status) {
-          case 401:
-            useAuthStore.getState().logout();
-            window.location.href = "/login";
-            toast.error("Session expired. Please login again.");
-            break;
-
-          case 403:
-            toast.error("You do not have permission to perform this action.");
-            break;
-
-          case 404:
-            toast.error("Resource not found.");
-            break;
-
-          default:
-            if (typeof status === "number" && status >= 500) {
-              toast.error("Server error. Please try again later.");
-            }
-            break;
-        }
-
-        return Promise.reject(error);
+// ===== RESPONSE INTERCEPTOR (Handle Errors) =====
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      // Clear invalid token
+      localStorage.removeItem('access_token');
+      // Redirect to login if needed
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
       }
-    );
+    }
+    return Promise.reject(error);
   }
+);
 
-  async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.get<T>(url, config);
-    return response.data;
-  }
+export default apiClient;
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.post<T>(url, data, config);
-    return response.data;
-  }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.put<T>(url, data, config);
-    return response.data;
-  }
+// ===== CONNECTORS TYPES =====
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.patch<T>(url, data, config);
-    return response.data;
-  }
-
-  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.delete<T>(url, config);
-    return response.data;
-  }
+export interface ConnectorConfig {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  database: string;
+  ssl: boolean;
 }
 
-export const apiClient = new ApiClient();
+export interface Connector {
+  id: string;
+  name: string;
+  type: 'postgres' | 'mysql';
+  config: ConnectorConfig;
+  status: string;
+  last_tested_at: string | null;
+  last_test_status: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConnectorCreateRequest {
+  name: string;
+  type: 'postgres' | 'mysql';
+  config: ConnectorConfig;
+}
+
+export interface TestConnectionResponse {
+  status: 'success' | 'error';
+  message: string;
+  latency_ms: number;
+  details?: {
+    server_version?: string;
+    database?: string;
+    tables_count?: number;
+    connection_type?: string;
+    error_type?: string;
+    error_code?: number;
+    hint?: string;
+  };
+}
+
+export interface ConnectorListResponse {
+  total: number;
+  connectors: Connector[];
+}
+
+// ===== CONNECTORS API FUNCTIONS =====
+
+/**
+ * Get all connectors
+ * @param type Optional filter by connector type (postgres, mysql)
+ * @returns List of connectors with masked passwords
+ */
+export const getConnectors = async (type?: 'postgres' | 'mysql'): Promise<ConnectorListResponse> => {
+  const params = type ? { connector_type: type } : {};
+  const response = await apiClient.get<ConnectorListResponse>('/connectors/', { params });
+  return response.data;
+};
+
+/**
+ * Create a new connector
+ * @param data Connector configuration
+ * @returns Created connector with masked password
+ */
+export const createConnector = async (data: ConnectorCreateRequest): Promise<Connector> => {
+  const response = await apiClient.post<Connector>('/connectors/', data);
+  return response.data;
+};
+
+/**
+ * Test a connector connection (KILLER FEATURE)
+ * @param id Connector ID
+ * @returns Connection test results with latency and details
+ */
+export const testConnector = async (id: string): Promise<TestConnectionResponse> => {
+  const response = await apiClient.post<TestConnectionResponse>(`/connectors/${id}/test`);
+  return response.data;
+};
+
+/**
+ * Delete a connector
+ * @param id Connector ID
+ * @returns Success message
+ */
+export const deleteConnector = async (id: string): Promise<{ message: string; id: string }> => {
+  const response = await apiClient.delete<{ message: string; id: string }>(`/connectors/${id}`);
+  return response.data;
+};

@@ -1,0 +1,55 @@
+﻿{
+  "version": "1.0",
+  "last_updated": "2026-01-30",
+  "regions": {
+    "MA": {
+      "name": "Morocco",
+      "regulations": ["CNDP-09-08"],
+      "identifiers": [
+        {
+          "name": "CNIE (National ID)",
+          "severity": "HIGH",
+          "regex": "\\b[A-Z]{1,2}\\d{6}\\b",
+          "description": "Moroccan National ID Card (Carte Nationale)"
+        },
+        {
+          "name": "RIB (Bank Account)",
+          "severity": "CRITICAL",
+          "regex": "\\b\\d{24}\\b",
+          "description": "Relevé d'Identité Bancaire (24 digits)"
+        },
+        {
+          "name": "CNSS (Social Security)",
+          "severity": "HIGH",
+          "regex": "\\b\\d{9}\\b",
+          "description": "Caisse Nationale de Sécurité Sociale"
+        },
+        {
+          "name": "Phone Number",
+          "severity": "MEDIUM",
+          "regex": "\\b(?:\\+212|0)[5-7]\\d{8}\\b",
+          "description": "Moroccan Mobile/Fixed Line"
+        }
+      ]
+    },
+    "GLOBAL": {
+      "name": "International",
+      "regulations": ["GDPR", "PCI-DSS"],
+      "identifiers": [
+        {
+          "name": "Email Address",
+          "severity": "MEDIUM",
+          "regex": "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b",
+          "description": "Standard Email Format"
+        },
+        {
+          "name": "Credit Card",
+          "severity": "CRITICAL",
+          "logic": "Luhn Algorithm",
+          "regex": "\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14})\\b",
+          "description": "Visa/Mastercard Numbers"
+        }
+      ]
+    }
+  }
+}

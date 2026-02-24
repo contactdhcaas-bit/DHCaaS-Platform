@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Global layout constraints only. Tailwind directives live in src/index.css. */
 
 html,
 body,

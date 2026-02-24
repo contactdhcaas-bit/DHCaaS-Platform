@@ -17,5 +17,14 @@
   "bugs": {
     "url": "https://github.com/dhcaaS/DHCaaS-Platform/issues"
   },
-  "homepage": "https://github.com/dhcaaS/DHCaaS-Platform#readme"
+  "homepage": "https://github.com/dhcaaS/DHCaaS-Platform#readme",
+  "dependencies": {
+    "@ant-design/icons": "^6.1.0",
+    "antd": "^6.3.0",
+    "axios": "^1.13.4",
+    "react-international-phone": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.9.36"
+  }
 }
