@@ -12,6 +12,7 @@ import {
   Loader2,
   RefreshCw,
   Server,
+  Eye,
 } from 'lucide-react';
 import {
   getConnectors,
@@ -21,6 +22,7 @@ import {
   TestConnectionResponse,
 } from '../services/api';
 import AddConnectorModal from '../components/AddConnectorModal';
+import SchemaViewerModal from '../components/SchemaViewerModal';
 
 const ConnectorsPage: React.FC = () => {
   const [connectors, setConnectors] = useState<Connector[]>([]);
@@ -32,6 +34,11 @@ const ConnectorsPage: React.FC = () => {
     result: TestConnectionResponse;
   } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Schema Viewer Modal State
+  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
+  const [selectedConnectorForSchema, setSelectedConnectorForSchema] = useState<string | null>(null);
+  const [selectedConnectorNameForSchema, setSelectedConnectorNameForSchema] = useState<string>('');
 
   useEffect(() => {
     fetchConnectors();
@@ -84,6 +91,12 @@ const ConnectorsPage: React.FC = () => {
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Delete failed');
     }
+  };
+
+  const handleViewSchema = (connector: Connector) => {
+    setSelectedConnectorForSchema(connector.id);
+    setSelectedConnectorNameForSchema(connector.name);
+    setIsSchemaModalOpen(true);
   };
 
   const getTypeLabel = (type: string) => {
@@ -357,6 +370,13 @@ const ConnectorsPage: React.FC = () => {
                     )}
                   </button>
                   <button
+                    onClick={() => handleViewSchema(connector)}
+                    className="px-4 py-2.5 bg-[#0F172A] hover:bg-[#1E293B]/50 border border-[#1E293B] text-slate-300 hover:text-white rounded-lg transition-all"
+                    title="View Database Schema"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
+                  <button
                     onClick={() => handleDelete(connector)}
                     className="px-4 py-2.5 bg-[#0F172A] hover:bg-red-500/10 border border-[#1E293B] hover:border-red-500/30 text-slate-400 hover:text-red-400 rounded-lg transition-all"
                   >
@@ -374,6 +394,14 @@ const ConnectorsPage: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchConnectors}
+      />
+
+      {/* Schema Viewer Modal */}
+      <SchemaViewerModal
+        isOpen={isSchemaModalOpen}
+        onClose={() => setIsSchemaModalOpen(false)}
+        connectorId={selectedConnectorForSchema}
+        connectorName={selectedConnectorNameForSchema}
       />
     </div>
   );

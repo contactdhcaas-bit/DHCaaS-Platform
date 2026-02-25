@@ -1,380 +1,502 @@
 """
 Data Quality Rules API Endpoints
-REST API for managing rules, executing validations, and viewing violations
+Manages CRUD operations for data quality validation rules.
+Sprint 6: Core rule management (not_null, regex_match, numeric_range, string_length, allowed_values)
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+from fastapi import APIRouter, HTTPException, status, Query
+from typing import Optional, List
 from datetime import datetime
+from bson import ObjectId
 import logging
 
-from app.models.rule import (
-    DataQualityRuleCreate,
-    DataQualityRuleUpdate,
-    DataQualityRuleResponse,
-    DataQualityRuleInDB,
-    RuleViolationResponse,
+from app.core.database import get_database
+from app.models.dq_rule import (
+    DQRuleCreate,
+    DQRuleUpdate,
+    DQRuleResponse,
+    DQRuleListResponse,
+    DQRuleDeleteResponse,
     RuleType,
     Severity,
-    RuleStatus
 )
-from app.core.database import get_database
 
+router = APIRouter()
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["Data Quality Rules"])
+
+# ===== HELPER FUNCTIONS =====
+
+def validate_object_id(id: str, field_name: str = "ID") -> ObjectId:
+    """Validate and convert string ID to ObjectId"""
+    if not ObjectId.is_valid(id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid {field_name} format: {id}"
+        )
+    return ObjectId(id)
 
 
-# ============================================================================
-# RULE CRUD ENDPOINTS
-# ============================================================================
-
-@router.post("/", response_model=DataQualityRuleResponse, status_code=201)
-async def create_new_rule(rule: DataQualityRuleCreate):
-    """
-    Create a new data quality rule.
-    """
-    try:
-        db = get_database()
-        if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
-        
-        rule_data = DataQualityRuleInDB(**rule.dict()).dict()
-        result = await db.data_quality_rules.insert_one(rule_data)
-        
-        created_rule = await db.data_quality_rules.find_one({"_id": result.inserted_id})
-        
-        logger.info(f"✅ Rule created: {rule.rule_name} ({rule.rule_type})")
-        
-        return DataQualityRuleResponse(**created_rule)
-        
-    except Exception as e:
-        logger.error(f"❌ Error creating rule: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create rule")
+def format_rule_response(rule_doc: dict) -> DQRuleResponse:
+    """Format MongoDB document to DQRuleResponse model"""
+    return DQRuleResponse(
+        id=str(rule_doc['_id']),
+        rule_name=rule_doc['rule_name'],
+        description=rule_doc.get('description'),
+        connector_id=str(rule_doc['connector_id']),
+        connector_name=rule_doc.get('connector_name', 'Unknown'),
+        table_name=rule_doc['table_name'],
+        column_name=rule_doc['column_name'],
+        data_type=rule_doc.get('data_type'),
+        rule_type=rule_doc['rule_type'],
+        rule_config=rule_doc.get('rule_config', {}),
+        severity=rule_doc['severity'],
+        enabled=rule_doc['enabled'],
+        sample_size=rule_doc.get('sample_size'),
+        created_at=rule_doc['created_at'],
+        updated_at=rule_doc['updated_at'],
+        last_executed_at=rule_doc.get('last_executed_at'),
+        last_execution_status=rule_doc.get('last_execution_status'),
+        last_pass_count=rule_doc.get('last_pass_count'),
+        last_fail_count=rule_doc.get('last_fail_count'),
+        last_pass_rate=rule_doc.get('last_pass_rate'),
+    )
 
 
-@router.get("/", response_model=List[DataQualityRuleResponse])
-async def list_all_rules(
-    limit: int = Query(100, ge=1, le=500),
-    skip: int = Query(0, ge=0),
-    status: Optional[RuleStatus] = None
+async def validate_connector_exists(connector_id: ObjectId) -> dict:
+    """Validate that connector exists and return connector document"""
+    db = get_database()
+    connector = await db.data_sources.find_one({'_id': connector_id})
+    if not connector:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Connector with ID '{connector_id}' not found"
+        )
+    return connector
+
+
+async def validate_rule_uniqueness(
+    connector_id: ObjectId,
+    rule_name: str,
+    exclude_rule_id: Optional[ObjectId] = None
+) -> None:
+    """Validate that rule name is unique within connector"""
+    db = get_database()
+    query = {
+        'connector_id': connector_id,
+        'rule_name': rule_name
+    }
+    
+    if exclude_rule_id:
+        query['_id'] = {'$ne': exclude_rule_id}
+    
+    existing = await db.dq_rules.find_one(query)
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Rule with name '{rule_name}' already exists for this connector"
+        )
+
+
+# ===== API ENDPOINTS =====
+
+@router.get("/", response_model=DQRuleListResponse)
+async def list_rules(
+    connector_id: Optional[str] = Query(None, description="Filter by connector ID"),
+    table_name: Optional[str] = Query(None, description="Filter by table name"),
+    rule_type: Optional[RuleType] = Query(None, description="Filter by rule type"),
+    severity: Optional[Severity] = Query(None, description="Filter by severity"),
+    enabled: Optional[bool] = Query(None, description="Filter by enabled status"),
 ):
     """
-    List all data quality rules with pagination.
+    List all data quality rules with optional filters.
+    
+    Query Parameters:
+        connector_id: Filter rules by connector
+        table_name: Filter rules by table name
+        rule_type: Filter rules by type
+        severity: Filter rules by severity level
+        enabled: Filter by enabled/disabled status
+    
+    Returns:
+        List of data quality rules
     """
     try:
         db = get_database()
-        if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
+        dq_rules_col = db.dq_rules
         
-        query = {}
-        if status:
-            query["status"] = status.value
+        # Build query filter
+        query_filter = {}
         
-        cursor = db.data_quality_rules.find(query).skip(skip).limit(limit)
-        rules = await cursor.to_list(length=limit)
+        if connector_id:
+            connector_obj_id = validate_object_id(connector_id, "Connector ID")
+            query_filter['connector_id'] = connector_obj_id
         
-        return [DataQualityRuleResponse(**rule) for rule in rules]
+        if table_name:
+            query_filter['table_name'] = table_name
         
-    except Exception as e:
-        logger.error(f"❌ Error listing rules: {e}")
-        raise HTTPException(status_code=500, detail="Failed to list rules")
-
-
-@router.get("/{rule_id}", response_model=DataQualityRuleResponse)
-async def get_rule_details(rule_id: str):
-    """
-    Get details of a specific rule.
-    """
-    try:
-        db = get_database()
-        if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
+        if rule_type:
+            query_filter['rule_type'] = rule_type.value
         
-        rule = await db.data_quality_rules.find_one({"rule_id": rule_id})
+        if severity:
+            query_filter['severity'] = severity.value
         
-        if not rule:
-            raise HTTPException(status_code=404, detail=f"Rule not found: {rule_id}")
+        if enabled is not None:
+            query_filter['enabled'] = enabled
         
-        return DataQualityRuleResponse(**rule)
+        # Fetch rules
+        rules_cursor = dq_rules_col.find(query_filter).sort('created_at', -1)
+        rules_list = await rules_cursor.to_list(length=None)
+        
+        # Format response
+        formatted_rules = [format_rule_response(rule) for rule in rules_list]
+        
+        logger.info(f"Listed {len(formatted_rules)} rules with filters: {query_filter}")
+        
+        return DQRuleListResponse(
+            total=len(formatted_rules),
+            rules=formatted_rules
+        )
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error fetching rule {rule_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch rule")
+        logger.error(f"Error listing rules: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list rules: {str(e)}"
+        )
 
 
-@router.put("/{rule_id}", response_model=DataQualityRuleResponse)
-async def update_existing_rule(rule_id: str, update_data: DataQualityRuleUpdate):
+@router.post("/", response_model=DQRuleResponse, status_code=status.HTTP_201_CREATED)
+async def create_rule(request: DQRuleCreate):
     """
-    Update an existing rule.
+    Create a new data quality rule.
+    
+    Request Body:
+        rule_name: Unique name for the rule within connector
+        description: Optional description
+        connector_id: Target connector ID
+        table_name: Target table name
+        column_name: Target column name
+        rule_type: Type of rule (not_null, regex_match, numeric_range, string_length, allowed_values)
+        rule_config: Configuration for the rule type
+        severity: Rule severity (critical, high, medium, low)
+        enabled: Enable rule immediately (default: true)
+        sample_size: Optional row sampling limit
+    
+    Returns:
+        Created rule with metadata
     """
     try:
         db = get_database()
-        if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
+        dq_rules_col = db.dq_rules
         
-        update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+        # Validate connector exists
+        connector_obj_id = validate_object_id(request.connector_id, "Connector ID")
+        connector = await validate_connector_exists(connector_obj_id)
+        
+        # Validate rule name uniqueness
+        await validate_rule_uniqueness(connector_obj_id, request.rule_name)
+        
+        # TODO: Validate table/column exists in connector schema (Sprint 6 Phase 2)
+        # This will use the schema introspection endpoint to verify target exists
+        
+        # Create rule document
+        now = datetime.utcnow()
+        rule_doc = {
+            'rule_name': request.rule_name,
+            'description': request.description,
+            'connector_id': connector_obj_id,
+            'connector_name': connector['name'],
+            'table_name': request.table_name,
+            'column_name': request.column_name,
+            'data_type': None,  # TODO: Extract from schema in Phase 2
+            'rule_type': request.rule_type.value,
+            'rule_config': request.rule_config,
+            'severity': request.severity.value,
+            'enabled': request.enabled,
+            'sample_size': request.sample_size,
+            'created_at': now,
+            'updated_at': now,
+            'last_executed_at': None,
+            'last_execution_status': None,
+            'last_pass_count': None,
+            'last_fail_count': None,
+            'last_pass_rate': None,
+        }
+        
+        # Insert into database
+        result = await dq_rules_col.insert_one(rule_doc)
+        rule_doc['_id'] = result.inserted_id
+        
+        logger.info(
+            f"Created rule: {request.rule_name} for connector {connector['name']} "
+            f"on {request.table_name}.{request.column_name}"
+        )
+        
+        return format_rule_response(rule_doc)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating rule: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create rule: {str(e)}"
+        )
+
+
+@router.get("/{rule_id}", response_model=DQRuleResponse)
+async def get_rule(rule_id: str):
+    """
+    Get details of a specific rule.
+    
+    Path Parameters:
+        rule_id: MongoDB ObjectId of the rule
+    
+    Returns:
+        Rule details with metadata
+    """
+    try:
+        db = get_database()
+        dq_rules_col = db.dq_rules
+        
+        # Validate ObjectId format
+        rule_obj_id = validate_object_id(rule_id, "Rule ID")
+        
+        # Fetch rule
+        rule = await dq_rules_col.find_one({'_id': rule_obj_id})
+        
+        if not rule:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Rule with ID '{rule_id}' not found"
+            )
+        
+        return format_rule_response(rule)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching rule {rule_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch rule: {str(e)}"
+        )
+
+
+@router.put("/{rule_id}", response_model=DQRuleResponse)
+async def update_rule(rule_id: str, request: DQRuleUpdate):
+    """
+    Update an existing data quality rule.
+    
+    Path Parameters:
+        rule_id: MongoDB ObjectId of the rule
+    
+    Request Body:
+        Optional fields to update (rule_name, description, rule_config, severity, enabled, sample_size)
+    
+    Returns:
+        Updated rule with metadata
+    """
+    try:
+        db = get_database()
+        dq_rules_col = db.dq_rules
+        
+        # Validate ObjectId format
+        rule_obj_id = validate_object_id(rule_id, "Rule ID")
+        
+        # Check if rule exists
+        existing_rule = await dq_rules_col.find_one({'_id': rule_obj_id})
+        if not existing_rule:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Rule with ID '{rule_id}' not found"
+            )
+        
+        # Build update dict (only non-None fields)
+        update_dict = {k: v for k, v in request.dict().items() if v is not None}
         
         if not update_dict:
-            raise HTTPException(status_code=400, detail="No fields to update")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No fields provided for update"
+            )
         
-        update_dict["updated_at"] = datetime.utcnow()
+        # If rule_name is being updated, validate uniqueness
+        if 'rule_name' in update_dict:
+            await validate_rule_uniqueness(
+                existing_rule['connector_id'],
+                update_dict['rule_name'],
+                exclude_rule_id=rule_obj_id
+            )
         
-        result = await db.data_quality_rules.update_one(
-            {"rule_id": rule_id},
-            {"$set": update_dict}
+        # Convert enums to values
+        if 'severity' in update_dict:
+            update_dict['severity'] = update_dict['severity'].value
+        
+        # Add updated timestamp
+        update_dict['updated_at'] = datetime.utcnow()
+        
+        # Update rule
+        await dq_rules_col.update_one(
+            {'_id': rule_obj_id},
+            {'$set': update_dict}
+        )
+        
+        # Fetch updated rule
+        updated_rule = await dq_rules_col.find_one({'_id': rule_obj_id})
+        
+        logger.info(f"Updated rule: {existing_rule['rule_name']} (ID: {rule_id})")
+        
+        return format_rule_response(updated_rule)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating rule {rule_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update rule: {str(e)}"
+        )
+
+
+@router.delete("/{rule_id}", response_model=DQRuleDeleteResponse)
+async def delete_rule(rule_id: str):
+    """
+    Delete a data quality rule.
+    
+    Path Parameters:
+        rule_id: MongoDB ObjectId of the rule
+    
+    Returns:
+        Success message with deleted rule ID
+    """
+    try:
+        db = get_database()
+        dq_rules_col = db.dq_rules
+        
+        # Validate ObjectId format
+        rule_obj_id = validate_object_id(rule_id, "Rule ID")
+        
+        # Check if rule exists
+        rule = await dq_rules_col.find_one({'_id': rule_obj_id})
+        if not rule:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Rule with ID '{rule_id}' not found"
+            )
+        
+        # Delete rule
+        result = await dq_rules_col.delete_one({'_id': rule_obj_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to delete rule"
+            )
+        
+        logger.info(f"Deleted rule: {rule['rule_name']} (ID: {rule_id})")
+        
+        return DQRuleDeleteResponse(
+            message=f"Rule '{rule['rule_name']}' deleted successfully",
+            id=rule_id
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting rule: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete rule: {str(e)}"
+        )
+
+
+@router.post("/{rule_id}/enable")
+async def enable_rule(rule_id: str):
+    """
+    Enable a data quality rule.
+    
+    Path Parameters:
+        rule_id: MongoDB ObjectId of the rule
+    
+    Returns:
+        Success message
+    """
+    try:
+        db = get_database()
+        dq_rules_col = db.dq_rules
+        
+        # Validate ObjectId format
+        rule_obj_id = validate_object_id(rule_id, "Rule ID")
+        
+        # Update rule
+        result = await dq_rules_col.update_one(
+            {'_id': rule_obj_id},
+            {'$set': {'enabled': True, 'updated_at': datetime.utcnow()}}
         )
         
         if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail=f"Rule not found: {rule_id}")
-        
-        updated_rule = await db.data_quality_rules.find_one({"rule_id": rule_id})
-        
-        logger.info(f"✅ Rule updated: {rule_id}")
-        
-        return DataQualityRuleResponse(**updated_rule)
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Error updating rule {rule_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update rule")
-
-
-@router.delete("/{rule_id}", status_code=200)
-async def delete_existing_rule(
-    rule_id: str,
-    soft_delete: bool = Query(True, description="Soft delete (archive) or hard delete")
-):
-    """
-    Delete a rule (soft or hard delete).
-    """
-    try:
-        db = get_database()
-        if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
-        
-        if soft_delete:
-            result = await db.data_quality_rules.update_one(
-                {"rule_id": rule_id},
-                {"$set": {"status": "ARCHIVED", "updated_at": datetime.utcnow()}}
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Rule with ID '{rule_id}' not found"
             )
-            action = "archived"
-        else:
-            result = await db.data_quality_rules.delete_one({"rule_id": rule_id})
-            action = "deleted"
         
-        if result.matched_count == 0 if soft_delete else result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail=f"Rule not found: {rule_id}")
+        logger.info(f"Enabled rule: {rule_id}")
         
-        logger.info(f"✅ Rule {action}: {rule_id}")
-        
-        return {
-            "message": f"Rule {action} successfully",
-            "rule_id": rule_id,
-            "action": action
-        }
+        return {"message": "Rule enabled successfully", "id": rule_id}
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error deleting rule {rule_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to delete rule")
+        logger.error(f"Error enabling rule {rule_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to enable rule: {str(e)}"
+        )
 
 
-# ============================================================================
-# DATASET-SPECIFIC RULE ENDPOINTS
-# ============================================================================
-
-@router.get("/dataset/{job_id}", response_model=List[DataQualityRuleResponse])
-async def get_rules_for_dataset(
-    job_id: str,
-    active_only: bool = Query(False, description="Return only active rules"),
-    rule_type: Optional[RuleType] = None
-):
+@router.post("/{rule_id}/disable")
+async def disable_rule(rule_id: str):
     """
-    Get all rules for a specific dataset/scan job.
-    """
-    try:
-        db = get_database()
-        if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
-        
-        query = {"job_id": job_id}
-        
-        if active_only:
-            query["status"] = "ACTIVE"
-        
-        if rule_type:
-            query["rule_type"] = rule_type.value
-        
-        cursor = db.data_quality_rules.find(query)
-        rules = await cursor.to_list(length=1000)
-        
-        return [DataQualityRuleResponse(**rule) for rule in rules]
-        
-    except Exception as e:
-        logger.error(f"❌ Error fetching rules for job {job_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch rules")
-
-
-# ============================================================================
-# VIOLATIONS ENDPOINTS
-# ============================================================================
-
-@router.get("/{rule_id}/violations", response_model=List[RuleViolationResponse])
-async def get_rule_violations(
-    rule_id: str,
-    limit: int = Query(100, ge=1, le=500),
-    unresolved_only: bool = Query(False)
-):
-    """
-    Get all violations for a specific rule.
+    Disable a data quality rule.
+    
+    Path Parameters:
+        rule_id: MongoDB ObjectId of the rule
+    
+    Returns:
+        Success message
     """
     try:
         db = get_database()
-        if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
+        dq_rules_col = db.dq_rules
         
-        query = {"rule_id": rule_id}
+        # Validate ObjectId format
+        rule_obj_id = validate_object_id(rule_id, "Rule ID")
         
-        if unresolved_only:
-            query["resolved"] = False
+        # Update rule
+        result = await dq_rules_col.update_one(
+            {'_id': rule_obj_id},
+            {'$set': {'enabled': False, 'updated_at': datetime.utcnow()}}
+        )
         
-        cursor = db.violations.find(query).limit(limit)
-        violations = await cursor.to_list(length=limit)
+        if result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Rule with ID '{rule_id}' not found"
+            )
         
-        return [RuleViolationResponse(**v) for v in violations]
+        logger.info(f"Disabled rule: {rule_id}")
         
+        return {"message": "Rule disabled successfully", "id": rule_id}
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Error fetching violations for rule {rule_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch violations")
-
-
-@router.get("/dataset/{job_id}/violations", response_model=List[RuleViolationResponse])
-async def get_dataset_violations(
-    job_id: str,
-    severity: Optional[Severity] = None,
-    unresolved_only: bool = Query(False),
-    limit: int = Query(1000, ge=1, le=5000)
-):
-    """
-    Get all violations for a dataset/scan job.
-    """
-    try:
-        db = get_database()
-        if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
-        
-        query = {"job_id": job_id}
-        
-        if severity:
-            query["severity"] = severity.value
-        
-        if unresolved_only:
-            query["resolved"] = False
-        
-        cursor = db.violations.find(query).limit(limit)
-        violations = await cursor.to_list(length=limit)
-        
-        return [RuleViolationResponse(**v) for v in violations]
-        
-    except Exception as e:
-        logger.error(f"❌ Error fetching violations for job {job_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch violations")
-
-
-# ============================================================================
-# STATISTICS & ANALYTICS ENDPOINTS
-# ============================================================================
-
-@router.get("/stats/overview")
-async def get_rules_statistics():
-    """
-    Get overall rules engine statistics.
-    """
-    try:
-        db = get_database()
-        if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
-        
-        total_rules = await db.data_quality_rules.count_documents({})
-        active_rules = await db.data_quality_rules.count_documents({"status": "ACTIVE"})
-        inactive_rules = await db.data_quality_rules.count_documents({"status": "INACTIVE"})
-        archived_rules = await db.data_quality_rules.count_documents({"status": "ARCHIVED"})
-        
-        total_violations = await db.violations.count_documents({})
-        unresolved_violations = await db.violations.count_documents({"resolved": False})
-        
-        return {
-            "total_rules": total_rules,
-            "active_rules": active_rules,
-            "inactive_rules": inactive_rules,
-            "archived_rules": archived_rules,
-            "total_violations": total_violations,
-            "unresolved_violations": unresolved_violations,
-            "generated_at": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"❌ Error fetching rules statistics: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch statistics")
-
-
-
-# ============================================================================
-# VALIDATION ENDPOINT
-# ============================================================================
-
-@router.post("/validate/{job_id}")
-async def validate_dataset(job_id: str):
-    """
-    Execute all active rules for a dataset and return violations.
-    """
-    try:
-        from app.services.rule_validator import RuleValidator
-        
-        db = get_database()
-        if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
-        
-        # Get all active rules for this job
-        rules = await db.data_quality_rules.find({
-            "job_id": job_id,
-            "is_active": True
-        }).to_list(length=None)
-        
-        if not rules:
-            return {
-                "success": True,
-                "job_id": job_id,
-                "rules_executed": 0,
-                "violations_found": 0,
-                "violations": [],
-                "message": "No active rules found for this dataset"
-            }
-        
-        # Use RuleValidator to execute rules
-        logger.info(f"Starting validation for job {job_id} with {len(rules)} rules")
-        
-        validator = RuleValidator(job_id)
-        report = await validator.validate_all_rules()
-        
-        violations_found = report.total_violations
-        rules_executed = report.total_rules_executed
-        
-        logger.info(f"Validation complete: {rules_executed} rules, {violations_found} violations")
-        
-        return {
-            "success": True,
-            "job_id": job_id,
-            "rules_executed": rules_executed,
-            "violations_found": violations_found,
-            "message": f"Executed {rules_executed} rules successfully"
-        }
-        
-    except Exception as e:
-        logger.error(f"Validation error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error disabling rule {rule_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to disable rule: {str(e)}"
+        )

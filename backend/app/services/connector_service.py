@@ -2,6 +2,7 @@
 Connection Tester Service
 Tests database connections for PostgreSQL and MySQL connectors.
 Handles timeouts, errors, and returns structured responses.
+Supports schema introspection for data quality checks.
 """
 
 import psycopg2
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class ConnectionTester:
     """
-    Service class for testing database connections.
+    Service class for testing database connections and extracting schemas.
     Supports PostgreSQL and MySQL with timeout and error handling.
     """
     
@@ -98,7 +99,7 @@ class ConnectionTester:
                 'message': 'Connection established successfully!',
                 'latency_ms': latency_ms,
                 'details': {
-                    'server_version': server_version.split(',')[0],  # First part of version string
+                    'server_version': server_version.split(',')[0],
                     'database': database,
                     'tables_count': table_count,
                     'connection_type': 'PostgreSQL'
@@ -152,9 +153,15 @@ class ConnectionTester:
         finally:
             # Clean up resources
             if cursor:
-                cursor.close()
+                try:
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"Error closing PostgreSQL cursor: {e}")
             if connection:
-                connection.close()
+                try:
+                    connection.close()
+                except Exception as e:
+                    logger.warning(f"Error closing PostgreSQL connection: {e}")
     
     @staticmethod
     def test_mysql(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -290,9 +297,296 @@ class ConnectionTester:
         finally:
             # Clean up resources
             if cursor:
-                cursor.close()
+                try:
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"Error closing MySQL cursor: {e}")
             if connection:
-                connection.close()
+                try:
+                    connection.close()
+                except Exception as e:
+                    logger.warning(f"Error closing MySQL connection: {e}")
+
+    # ══════════════════════════════════════════════════════════════
+    # SCHEMA INTROSPECTION METHODS - HARDENED
+    # ══════════════════════════════════════════════════════════════
+
+    @staticmethod
+    def get_postgres_schema(config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extract complete schema from PostgreSQL database.
+        HARDENED: Never crashes, always returns structured response.
+        
+        Args:
+            config: Dictionary containing connection parameters
+        
+        Returns:
+            Dictionary with status, schema, table_count, and message
+        """
+        connection = None
+        cursor = None
+        
+        try:
+            # Extract and validate connection parameters
+            host = config.get('host')
+            port = config.get('port', 5432)
+            username = config.get('username')
+            password = config.get('password')
+            database = config.get('database')
+            ssl_mode = 'require' if config.get('ssl', False) else 'prefer'
+            
+            # Validate required parameters
+            if not all([host, username, password, database]):
+                logger.error("PostgreSQL schema extraction: Missing required parameters")
+                return {
+                    'status': 'error',
+                    'schema': {},
+                    'table_count': 0,
+                    'message': 'Missing required connection parameters'
+                }
+            
+            logger.info(f"Extracting PostgreSQL schema from {host}:{port}/{database}")
+            
+            # Connect to database with timeout
+            connection = psycopg2.connect(
+                host=host,
+                port=port,
+                user=username,
+                password=password,
+                database=database,
+                sslmode=ssl_mode,
+                connect_timeout=10
+            )
+            
+            cursor = connection.cursor()
+            
+            # Query to get all tables and columns (excluding system schemas)
+            query = """
+                SELECT 
+                    t.table_name,
+                    c.column_name,
+                    c.data_type,
+                    c.is_nullable
+                FROM 
+                    information_schema.tables t
+                JOIN 
+                    information_schema.columns c 
+                    ON t.table_name = c.table_name 
+                    AND t.table_schema = c.table_schema
+                WHERE 
+                    t.table_schema NOT IN ('information_schema', 'pg_catalog')
+                    AND t.table_type = 'BASE TABLE'
+                ORDER BY 
+                    t.table_name, c.ordinal_position;
+            """
+            
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            
+            # Build schema dictionary
+            schema = {}
+            for table_name, column_name, data_type, is_nullable in rows:
+                if table_name not in schema:
+                    schema[table_name] = []
+                
+                schema[table_name].append({
+                    'column': column_name,
+                    'type': data_type,
+                    'nullable': is_nullable == 'YES'
+                })
+            
+            table_count = len(schema)
+            logger.info(f"Successfully extracted PostgreSQL schema: {table_count} tables")
+            
+            return {
+                'status': 'success',
+                'schema': schema,
+                'table_count': table_count,
+                'message': f'Successfully extracted schema for {table_count} table{"s" if table_count != 1 else ""}'
+            }
+            
+        except psycopg2.OperationalError as e:
+            error_msg = str(e).strip()
+            logger.error(f"PostgreSQL connection error during schema extraction: {error_msg}")
+            
+            return {
+                'status': 'error',
+                'schema': {},
+                'table_count': 0,
+                'message': f'Connection failed: {error_msg}'
+            }
+            
+        except psycopg2.Error as e:
+            error_msg = str(e).strip()
+            logger.error(f"PostgreSQL error during schema extraction: {error_msg}")
+            
+            return {
+                'status': 'error',
+                'schema': {},
+                'table_count': 0,
+                'message': f'Database error: {error_msg}'
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"Unexpected error during PostgreSQL schema extraction: {error_msg}", exc_info=True)
+            
+            return {
+                'status': 'error',
+                'schema': {},
+                'table_count': 0,
+                'message': f'Unexpected error: {error_msg}'
+            }
+            
+        finally:
+            # Always clean up resources
+            if cursor:
+                try:
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"Error closing PostgreSQL cursor: {e}")
+            if connection:
+                try:
+                    connection.close()
+                except Exception as e:
+                    logger.warning(f"Error closing PostgreSQL connection: {e}")
+
+    @staticmethod
+    def get_mysql_schema(config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extract complete schema from MySQL database.
+        HARDENED: Never crashes, always returns structured response.
+        
+        Args:
+            config: Dictionary containing connection parameters
+        
+        Returns:
+            Dictionary with status, schema, table_count, and message
+        """
+        connection = None
+        cursor = None
+        
+        try:
+            # Extract and validate connection parameters
+            host = config.get('host')
+            port = config.get('port', 3306)
+            username = config.get('username')
+            password = config.get('password')
+            database = config.get('database')
+            use_ssl = config.get('ssl', False)
+            
+            # Validate required parameters
+            if not all([host, username, password, database]):
+                logger.error("MySQL schema extraction: Missing required parameters")
+                return {
+                    'status': 'error',
+                    'schema': {},
+                    'table_count': 0,
+                    'message': 'Missing required connection parameters'
+                }
+            
+            logger.info(f"Extracting MySQL schema from {host}:{port}/{database}")
+            
+            # Connect to database with timeout
+            ssl_config = {'ssl': True} if use_ssl else None
+            
+            connection = pymysql.connect(
+                host=host,
+                port=port,
+                user=username,
+                password=password,
+                database=database,
+                connect_timeout=10,
+                **({'ssl': ssl_config} if ssl_config else {})
+            )
+            
+            cursor = connection.cursor()
+            
+            # Query to get all tables and columns from information_schema
+            query = """
+                SELECT 
+                    TABLE_NAME,
+                    COLUMN_NAME,
+                    COLUMN_TYPE,
+                    IS_NULLABLE
+                FROM 
+                    information_schema.COLUMNS
+                WHERE 
+                    TABLE_SCHEMA = %s
+                ORDER BY 
+                    TABLE_NAME, ORDINAL_POSITION;
+            """
+            
+            cursor.execute(query, (database,))
+            rows = cursor.fetchall()
+            
+            # Build schema dictionary
+            schema = {}
+            for table_name, column_name, column_type, is_nullable in rows:
+                if table_name not in schema:
+                    schema[table_name] = []
+                
+                schema[table_name].append({
+                    'column': column_name,
+                    'type': column_type,
+                    'nullable': is_nullable == 'YES'
+                })
+            
+            table_count = len(schema)
+            logger.info(f"Successfully extracted MySQL schema: {table_count} tables")
+            
+            return {
+                'status': 'success',
+                'schema': schema,
+                'table_count': table_count,
+                'message': f'Successfully extracted schema for {table_count} table{"s" if table_count != 1 else ""}'
+            }
+            
+        except pymysql.OperationalError as e:
+            error_msg = str(e)
+            logger.error(f"MySQL connection error during schema extraction: {error_msg}")
+            
+            return {
+                'status': 'error',
+                'schema': {},
+                'table_count': 0,
+                'message': f'Connection failed: {error_msg}'
+            }
+            
+        except pymysql.Error as e:
+            error_msg = str(e)
+            logger.error(f"MySQL error during schema extraction: {error_msg}")
+            
+            return {
+                'status': 'error',
+                'schema': {},
+                'table_count': 0,
+                'message': f'Database error: {error_msg}'
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"Unexpected error during MySQL schema extraction: {error_msg}", exc_info=True)
+            
+            return {
+                'status': 'error',
+                'schema': {},
+                'table_count': 0,
+                'message': f'Unexpected error: {error_msg}'
+            }
+            
+        finally:
+            # Always clean up resources
+            if cursor:
+                try:
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"Error closing MySQL cursor: {e}")
+            if connection:
+                try:
+                    connection.close()
+                except Exception as e:
+                    logger.warning(f"Error closing MySQL connection: {e}")
 
 
 class ConnectionTestException(Exception):

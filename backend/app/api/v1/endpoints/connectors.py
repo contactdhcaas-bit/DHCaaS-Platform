@@ -1,6 +1,6 @@
 ﻿"""
 Cloud Connectors API Endpoints
-Manages database connections (PostgreSQL, MySQL) with test functionality.
+Manages database connections (PostgreSQL, MySQL) with test functionality and schema introspection.
 """
 
 from fastapi import APIRouter, HTTPException, status
@@ -142,7 +142,7 @@ async def list_connectors(
         if connector_type:
             query_filter['type'] = connector_type.value
         
-        # Fetch connectors - FIXED: Use await with to_list() for async Motor cursor
+        # Fetch connectors
         connectors_cursor = data_sources_col.find(query_filter).sort('created_at', -1)
         connectors_list = await connectors_cursor.to_list(length=None)
         
@@ -302,6 +302,96 @@ async def test_connector(connector_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to test connector: {str(e)}"
+        )
+
+
+@router.get("/{connector_id}/schema")
+async def get_connector_schema(connector_id: str):
+    """
+    Extract database schema from a connector (SCHEMA INTROSPECTION).
+    
+    This endpoint:
+    1. Retrieves the connector from database
+    2. Connects to the database
+    3. Extracts all tables and columns with data types
+    4. Returns structured schema information
+    
+    This is the CORE ENGINE for DHCaaS before applying Data Quality Rules.
+    
+    Path Parameters:
+        connector_id: MongoDB ObjectId of the connector
+    
+    Returns:
+        Schema structure with tables and columns:
+        {
+            'status': 'success',
+            'schema': {
+                'table_name': [
+                    {'column': 'id', 'type': 'integer', 'nullable': False},
+                    {'column': 'name', 'type': 'varchar', 'nullable': True}
+                ]
+            },
+            'table_count': 2,
+            'message': 'Successfully extracted schema for 2 tables'
+        }
+    """
+    try:
+        db = get_database()
+        data_sources_col = db.data_sources
+        
+        # Validate ObjectId format
+        if not ObjectId.is_valid(connector_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid connector ID format"
+            )
+        
+        # Retrieve connector from database
+        connector = await data_sources_col.find_one({'_id': ObjectId(connector_id)})
+        if not connector:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Connector with ID '{connector_id}' not found"
+            )
+        
+        connector_type = connector['type']
+        config = connector['config']
+        
+        logger.info(f"Extracting schema for {connector_type} connector: {connector['name']}")
+        
+        # Extract schema based on connector type
+        if connector_type == 'postgres':
+            schema_result = ConnectionTester.get_postgres_schema(config)
+        elif connector_type == 'mysql':
+            schema_result = ConnectionTester.get_mysql_schema(config)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unsupported connector type: {connector_type}"
+            )
+        
+        # Check if schema extraction failed
+        if schema_result['status'] == 'error':
+            logger.error(f"Schema extraction failed: {schema_result['message']}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=schema_result['message']
+            )
+        
+        logger.info(
+            f"Schema extracted successfully: {connector['name']} - "
+            f"{schema_result['table_count']} tables"
+        )
+        
+        return schema_result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error extracting schema: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to extract schema: {str(e)}"
         )
 
 
