@@ -1,0 +1,91 @@
+name: security-g0-ci
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: g0-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: G0 test suite (Linux, MongoDB replica set)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      ENVIRONMENT: development
+      MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+      MONGO_TEST_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Start MongoDB as single-node replica set rs0
+        working-directory: .
+        run: |
+          docker run -d --name mongo -p 27017:27017 mongo:8.0 --replSet rs0 --bind_ip_all
+          for i in $(seq 1 30); do
+            docker exec mongo mongosh --quiet --eval "db.adminCommand('ping').ok" >/dev/null 2>&1 && break
+            sleep 2
+          done
+          docker exec mongo mongosh --quiet --eval "rs.initiate({_id:'rs0',members:[{_id:0,host:'127.0.0.1:27017'}]})"
+          for i in $(seq 1 30); do
+            if docker exec mongo mongosh --quiet --eval "db.hello().isWritablePrimary" | grep -q true; then
+              echo "replica set primary ready"; break
+            fi
+            sleep 2
+          done
+          docker exec mongo mongosh --quiet --eval "db.hello().isWritablePrimary" | grep -q true
+
+      - name: Generate ephemeral secrets (masked)
+        run: |
+          MK=$(python -c "import base64,secrets;print(base64.b64encode(secrets.token_bytes(32)).decode())")
+          JK=$(python -c "import secrets;print(secrets.token_urlsafe(48))")
+          echo "::add-mask::$MK"
+          echo "::add-mask::$JK"
+          echo "DHC_MASTER_KEY=$MK" >> "$GITHUB_ENV"
+          echo "JWT_SECRET_KEY=$JK" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install "pytest==9.1.1" "pytest-asyncio==1.4.0" "httpx==0.28.1" "rfc8785==0.1.4"
+
+      - name: Run test suite
+        run: python -m pytest tests -v --junitxml=test-results.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g0-test-results
+          path: backend/test-results.xml
+
+  dependency-audit:
+    name: pip-audit (informational until triaged)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Audit dependencies
+        run: |
+          pip install pip-audit
+          if [ -f requirements.txt ]; then pip-audit -r requirements.txt; else echo "no requirements.txt found"; fi
