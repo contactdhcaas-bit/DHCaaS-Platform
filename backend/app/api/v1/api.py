@@ -1,11 +1,11 @@
 ﻿# app/api/v1/api.py
 """
 API Router Configuration
-Aggregates all API v1 endpoints
+Implements Default-Deny: all routers are protected by default unless explicitly placed in public_router.
 """
 
-
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.dependencies.auth import get_current_active_user
 from app.api.v1.endpoints import (
     scans,
     reports,
@@ -21,102 +21,92 @@ from app.api.v1.endpoints import (
     connectors
 )
 
-
-# Create main API router
 api_router = APIRouter()
 
-
-# ===== AUTHENTICATION ENDPOINTS =====
-api_router.include_router(
+# ==============================================================================
+# 1. PUBLIC ROUTER (Explicit Allowlist Only)
+# Endpoints inside auth.router handle login, register, and health checks.
+# Note: /auth/me and /auth/logout retain their explicit get_current_active_user dependencies.
+# ==============================================================================
+public_router = APIRouter()
+public_router.include_router(
     auth.router,
     prefix="/auth",
     tags=["Authentication"]
 )
 
+# ==============================================================================
+# 2. PROTECTED ROUTER (Default-Deny: Mandatory Authentication Dependency)
+# Any route registered here strictly rejects unauthenticated anonymous requests.
+# ==============================================================================
+protected_router = APIRouter(dependencies=[Depends(get_current_active_user)])
 
-# ===== USER MANAGEMENT ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     users.router,
     prefix="/users",
     tags=["User Management"]
 )
 
-
-# ===== DASHBOARD ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     dashboard.router,
     prefix="/dashboard",
     tags=["Dashboard"]
 )
 
-
-# ===== SCAN JOBS ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     scans.router,
     prefix="/scan-jobs",
     tags=["Scan Jobs"]
 )
 
-
-# ===== REPORTS ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     reports.router,
     prefix="/reports",
     tags=["Reports"]
 )
 
-
-# ===== DATA QUALITY RULES ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     rules.router,
     prefix="/rules",
     tags=["Data Quality Rules"]
 )
 
-
-# ===== POLICIES ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     policies.router,
     prefix="/policies",
     tags=["Policies"]
 )
 
-
-# ===== DATASETS ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     datasets.router,
     prefix="/datasets",
     tags=["Datasets"]
 )
 
-
-# ===== GOVERNANCE ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     governance.router,
     prefix="/governance",
     tags=["Governance"]
 )
 
-
-# ===== AUDIT LOG ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     audit.router,
     prefix="/audit",
     tags=["Audit Logs"]
 )
 
-
-# ===== AI CLASSIFICATION ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     analysis.router,
     prefix="/analysis",
     tags=["AI Classification"]
 )
 
-
-# ===== CLOUD CONNECTORS ENDPOINTS =====
-api_router.include_router(
+protected_router.include_router(
     connectors.router,
     prefix="/connectors",
     tags=["Cloud Connectors"]
 )
+
+# Mount both routers onto the root api_router
+api_router.include_router(public_router)
+api_router.include_router(protected_router)

@@ -1,4 +1,4 @@
-﻿# Dependencies / builds
+# Dependencies / builds
 **/node_modules/
 **/dist/
 **/build/
@@ -19,4 +19,18 @@ __pycache__/
 
 *.whl
 ersData Health Check Intercafe*
+
+.dev_master_key
+.task3_backups/
+
+# local environment and debug artefacts
+.venv/
+backend/.venv/
+.dev_master_key
+*.g0_backup
+*.f1_backup
+g0_*.txt
+context_for_gpt.txt
+connector_sources_dump.txt
+extracted_sources.txt
 
