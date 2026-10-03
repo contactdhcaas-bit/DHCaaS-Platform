@@ -36,6 +36,7 @@ import logging
 from bson import ObjectId
 from app.core.database import get_database
 from app.services.connector_service import ConnectionTester
+from starlette.concurrency import run_in_threadpool
 import os
 
 
@@ -126,7 +127,7 @@ async def list_connectors(connector_type: Optional[ConnectorType]=None):
         return ConnectorListResponse(total=len(formatted_connectors), connectors=formatted_connectors)
     except Exception as e:
         logger.error(f'Error listing connectors: {str(e)}')
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f'Failed to list connectors: {str(e)}')
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to list connectors')
 
 @router.post('/', response_model=ConnectorResponse, status_code=status.HTTP_201_CREATED)
 async def create_connector(request: ConnectorCreateRequest):
@@ -157,7 +158,7 @@ async def create_connector(request: ConnectorCreateRequest):
         raise
     except Exception as e:
         logger.error(f'Error creating connector: {str(e)}')
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f'Failed to create connector: {str(e)}')
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to create connector')
 
 @router.post('/{connector_id}/test', response_model=TestConnectionResponse)
 async def test_connector(connector_id: str):
@@ -193,20 +194,24 @@ async def test_connector(connector_id: str):
         config = _dhc_execution_config(connector)
         logger.info(f"Testing {connector_type} connector: {connector['name']}")
         if connector_type == 'postgres':
-            test_result = ConnectionTester.test_postgres(config)
+            test_result = await run_in_threadpool(ConnectionTester.test_postgres, config)
         elif connector_type == 'mysql':
-            test_result = ConnectionTester.test_mysql(config)
+            test_result = await run_in_threadpool(ConnectionTester.test_mysql, config)
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f'Unsupported connector type: {connector_type}')
         now = datetime.utcnow()
         await data_sources_col.update_one({'_id': ObjectId(connector_id)}, {'$set': {'last_tested_at': now, 'last_test_status': test_result['status'], 'updated_at': now}})
         logger.info(f"Connection test completed: {connector['name']} - Status: {test_result['status']}, Latency: {test_result['latency_ms']}ms")
+        if test_result.get('status') == 'error':
+            # F2: driver/network detail stays in server logs only
+            logger.warning(f"Connection test failed for {connector['name']}: {test_result.get('message')}")
+            return TestConnectionResponse(status='error', message='Connection failed', latency_ms=int(test_result.get('latency_ms', 0)), details=None)
         return TestConnectionResponse(**test_result)
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f'Error testing connector: {str(e)}')
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f'Failed to test connector: {str(e)}')
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to test connector')
 
 @router.get('/{connector_id}/schema')
 async def get_connector_schema(connector_id: str):
@@ -238,6 +243,10 @@ async def get_connector_schema(connector_id: str):
             'message': 'Successfully extracted schema for 2 tables'
         }
     """
+    # F5: same outbound-connection gate as /test (ADR-003 R4), before decryption.
+    if not _connector_test_enabled():
+        raise HTTPException(status_code=403, detail="Connector testing is disabled")
+
     try:
         db = get_database()
         data_sources_col = db.data_sources
@@ -250,21 +259,21 @@ async def get_connector_schema(connector_id: str):
         config = _dhc_execution_config(connector)
         logger.info(f"Extracting schema for {connector_type} connector: {connector['name']}")
         if connector_type == 'postgres':
-            schema_result = ConnectionTester.get_postgres_schema(config)
+            schema_result = await run_in_threadpool(ConnectionTester.get_postgres_schema, config)
         elif connector_type == 'mysql':
-            schema_result = ConnectionTester.get_mysql_schema(config)
+            schema_result = await run_in_threadpool(ConnectionTester.get_mysql_schema, config)
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f'Unsupported connector type: {connector_type}')
         if schema_result['status'] == 'error':
             logger.error(f"Schema extraction failed: {schema_result['message']}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=schema_result['message'])
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Schema extraction failed')
         logger.info(f"Schema extracted successfully: {connector['name']} - {schema_result['table_count']} tables")
         return schema_result
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f'Error extracting schema: {str(e)}')
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f'Failed to extract schema: {str(e)}')
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to extract schema')
 
 @router.delete('/{connector_id}', status_code=status.HTTP_200_OK)
 async def delete_connector(connector_id: str):
@@ -294,4 +303,4 @@ async def delete_connector(connector_id: str):
         raise
     except Exception as e:
         logger.error(f'Error deleting connector: {str(e)}')
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f'Failed to delete connector: {str(e)}')
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to delete connector')

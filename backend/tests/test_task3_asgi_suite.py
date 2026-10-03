@@ -169,6 +169,12 @@ async def client():
     await close_mongo_connection()
 
 
+def _mock_for(cls, name, **kw):
+    """Mock matching the real method's sync/async nature."""
+    real = getattr(cls, name)
+    return (AsyncMock if inspect.iscoroutinefunction(real) else MagicMock)(**kw)
+
+
 class TestTask3ConnectorCredentialClosure:
 
     async def test_01_create_connector_returns_201(
@@ -318,18 +324,54 @@ class TestTask3ConnectorCredentialClosure:
         assert CANARY not in resp.text, "CANARY in test-endpoint response"
         assert CANARY not in caplog.text, "CANARY in captured logs"
 
-    async def test_08_schema_route_write_only(self, client, connector_payload):
-        cp = {
-            **connector_payload,
-            "name":   f"ci-schema-{uuid.uuid4().hex[:6]}",
-            "config": dict(connector_payload["config"]),
-        }
+    async def test_07c_failed_test_response_is_generic(self, client, monkeypatch):
+        """F2: driver/network detail stays in server logs, never in the response."""
+        mod = importlib.import_module("app.api.v1.endpoints.connectors")
+        _set_connector_test_flag(monkeypatch, mod, True)
+        CT = _connection_tester_cls()
+        leak = 'connection to server at "10.9.8.7", port 5432 failed: OperationalError'
+        m = _mock_for(CT, "test_postgres", return_value={
+            "status": "error", "message": leak, "latency_ms": 7,
+            "details": {"error_type": "OperationalError", "hint": "internal"}})
+        with mock_patch.object(CT, "test_postgres", m):
+            resp = await client.post(f"/api/v1/connectors/{_state['connector_id']}/test")
+        assert m.called, "test_postgres was not invoked"
+        assert "10.9.8.7" not in resp.text and "OperationalError" not in resp.text, \
+            f"FINDING F2: internal detail in response: {resp.text[:200]}"
+        assert resp.json().get("message") == "Connection failed"
+
+    async def test_08_schema_route_write_only(self, client, connector_payload, monkeypatch):
+        """Schema route: credential used in memory only; never in the response."""
+        mod = importlib.import_module("app.api.v1.endpoints.connectors")
+        _set_connector_test_flag(monkeypatch, mod, True)
+        cp = {**connector_payload, "name": f"ci-schema-{uuid.uuid4().hex[:6]}",
+              "config": dict(connector_payload["config"])}
         create = await client.post("/api/v1/connectors/", json=cp)
         assert create.status_code == 201
         cid = _get_id(create.json())
-        resp = await client.get(f"/api/v1/connectors/{cid}/schema")
+        CT = _connection_tester_cls()
+        m = _mock_for(CT, "get_postgres_schema",
+                      return_value={"status": "success", "table_count": 0, "tables": []})
+        with mock_patch.object(CT, "get_postgres_schema", m):
+            resp = await client.get(f"/api/v1/connectors/{cid}/schema")
+        assert m.called, "get_postgres_schema was not invoked"
+        assert CANARY in repr(m.call_args), "schema call did not receive the decrypted credential"
+        assert resp.status_code == 200, f"Unexpected status: {resp.status_code}"
         assert CANARY not in resp.text, "CANARY in schema response"
-        await client.delete(f"/api/v1/connectors/{cid}")
+        d = await client.delete(f"/api/v1/connectors/{cid}")
+        assert d.status_code in (200, 204), f"cleanup delete failed: {d.status_code}"
+
+    async def test_08b_schema_route_gated(self, client, monkeypatch):
+        """F5: no outbound connection via /schema when the gate is off."""
+        mod = importlib.import_module("app.api.v1.endpoints.connectors")
+        _set_connector_test_flag(monkeypatch, mod, False)
+        CT = _connection_tester_cls()
+        spy = _mock_for(CT, "get_postgres_schema",
+                        side_effect=AssertionError("schema connection attempted while gate is disabled"))
+        with mock_patch.object(CT, "get_postgres_schema", spy):
+            resp = await client.get(f"/api/v1/connectors/{_state['connector_id']}/schema")
+        assert not spy.called, "FINDING F5: outbound connection via /schema with gate off"
+        assert resp.status_code == 403, f"Expected 403, got {resp.status_code}"
 
     async def test_09_delete_connector_and_verify_absent(
         self, client, mongo
