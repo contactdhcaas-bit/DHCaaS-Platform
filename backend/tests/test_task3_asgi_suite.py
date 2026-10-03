@@ -89,55 +89,8 @@ def connector_payload() -> dict:
 
 # ── Tests ─────────────────────────────────────────────────────────────────
 
-@pytest.fixture(scope="module")
-def auth_token():
-    """Create a test admin in the throwaway DB and mint a JWT for it."""
-    import datetime
-    from bson import ObjectId
-    from app.core.config import settings
-    try:
-        from jose import jwt
-    except ImportError:
-        import jwt
-    mc = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-    users = mc[MONGO_DB].users
-    oid = ObjectId()
-    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-    users.insert_one({
-        "_id": oid, "user_id": str(oid), "email": f"ci-{oid}@test.invalid",
-        "full_name": "CI Test Admin", "hashed_password": "!", "is_active": True,
-        "is_verified": True, "role": "admin", "status": "active",
-        "created_at": now, "updated_at": now,
-    })
-    token = jwt.encode(
-        {"user_id": str(oid), "sub": str(oid), "role": "admin",
-         "exp": int((now + datetime.timedelta(hours=1)).timestamp()),
-         "iat": int(now.timestamp())},
-        settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-    yield token.decode() if isinstance(token, bytes) else token
-    users.delete_one({"_id": oid})
-    mc.close()
 
 
-@pytest_asyncio.fixture(scope="module")
-async def client(auth_token):
-    from httpx import AsyncClient, ASGITransport
-    from app.main import app as _app
-    from app.core.database import connect_to_mongo, close_mongo_connection, db_instance
-
-    await connect_to_mongo()
-    assert db_instance.db is not None, "connect_to_mongo() left db_instance.db as None"
-
-    transport = ASGITransport(app=_app, raise_app_exceptions=False)
-    async with AsyncClient(
-        transport=transport,
-        base_url="http://testserver",
-        headers={"Authorization": f"Bearer {auth_token}"},
-        follow_redirects=True,
-    ) as c:
-        yield c
-
-    await close_mongo_connection()
 
 
 def _connection_tester_cls():
@@ -154,6 +107,66 @@ def _connection_tester_cls():
 def _set_connector_test_flag(monkeypatch, mod, enabled: bool):
     # The gate reads the environment at request time (ADR-003 R4).
     monkeypatch.setenv("CONNECTOR_TEST_ENABLED", "true" if enabled else "false")
+
+
+@pytest_asyncio.fixture(scope="module")
+async def client():
+    """
+    Connect the app DB in this event loop, then provision the test user and
+    JWT in exactly the database the app reads (db_instance.db.name), so the
+    suite never depends on how DATABASE_NAME is resolved.
+    """
+    global MONGO_DB
+    import datetime
+    import time
+    from bson import ObjectId
+    from httpx import AsyncClient, ASGITransport
+    from app.main import app as _app
+    from app.core.config import settings
+    from app.core.database import connect_to_mongo, close_mongo_connection, db_instance
+    try:
+        from jose import jwt
+    except ImportError:
+        import jwt
+
+    await connect_to_mongo()
+    assert db_instance.db is not None, "connect_to_mongo() left db_instance.db as None"
+    MONGO_DB = db_instance.db.name
+    print(f"[SUITE] app database in use: {MONGO_DB}")
+
+    oid = ObjectId()
+    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+    try:
+        from app.core.security import get_password_hash
+        pw_hash = get_password_hash("ci-not-used")
+    except Exception:
+        import bcrypt
+        pw_hash = bcrypt.hashpw(b"ci-not-used", bcrypt.gensalt()).decode()
+    await db_instance.db.users.insert_one({
+        "_id": oid, "user_id": str(oid), "email": f"ci-{oid}@tenant-a.example",
+        "full_name": "CI Test Admin", "hashed_password": pw_hash,
+        "is_active": True, "is_superadmin": True, "is_verified": True,
+        "role": "admin", "status": "active", "subscription_status": "active",
+        "created_at": now, "updated_at": now,
+    })
+    token = jwt.encode(
+        {"user_id": str(oid), "sub": str(oid), "role": "admin",
+         "exp": int(time.time()) + 3600,
+         "iat": int(time.time())},
+        settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    token = token.decode() if isinstance(token, bytes) else token
+
+    transport = ASGITransport(app=_app, raise_app_exceptions=False)
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://testserver",
+        headers={"Authorization": f"Bearer {token}"},
+        follow_redirects=True,
+    ) as c:
+        yield c
+
+    await db_instance.db.users.delete_one({"_id": oid})
+    await close_mongo_connection()
 
 
 class TestTask3ConnectorCredentialClosure:
