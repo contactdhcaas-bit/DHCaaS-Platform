@@ -27,7 +27,7 @@ def _dhc_execution_config(connector):
             raise ValueError('Legacy plaintext credential is prohibited')
         config['password'] = _dhc_secret_store.decrypt_value(password, aad=connector['name'].encode('utf-8'))
     return config
-from fastapi import APIRouter, HTTPException, status
+from fastapi import Depends, APIRouter, HTTPException, status
 from pydantic import BaseModel, Field, validator
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -38,6 +38,9 @@ from app.core.database import get_database
 from app.services.connector_service import ConnectionTester
 from starlette.concurrency import run_in_threadpool
 import os
+from app.core.tenant import TenantContext
+from app.dependencies.tenant import get_tenant
+from app.repositories.connector_repository import ConnectorRepository
 
 
 def _connector_test_enabled() -> bool:
@@ -103,7 +106,8 @@ def format_connector_response(connector_doc: Dict[str, Any]) -> ConnectorRespons
     return ConnectorResponse(id=str(connector_doc['_id']), name=connector_doc['name'], type=connector_doc['type'], config=_dhc_public_config(connector_doc['config']), status=connector_doc.get('status', 'active'), last_tested_at=connector_doc.get('last_tested_at'), last_test_status=connector_doc.get('last_test_status'), created_at=connector_doc['created_at'], updated_at=connector_doc['updated_at'])
 
 @router.get('/', response_model=ConnectorListResponse)
-async def list_connectors(connector_type: Optional[ConnectorType]=None):
+async def list_connectors(connector_type: Optional[ConnectorType]=None,
+    tenant: TenantContext = Depends(get_tenant)):
     """
     List all saved data source connectors.
     Passwords are always masked in the response.
@@ -116,6 +120,7 @@ async def list_connectors(connector_type: Optional[ConnectorType]=None):
     """
     try:
         db = get_database()
+        repo = ConnectorRepository(db, tenant)
         data_sources_col = db.data_sources
         query_filter = {}
         if connector_type:
@@ -130,7 +135,8 @@ async def list_connectors(connector_type: Optional[ConnectorType]=None):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to list connectors')
 
 @router.post('/', response_model=ConnectorResponse, status_code=status.HTTP_201_CREATED)
-async def create_connector(request: ConnectorCreateRequest):
+async def create_connector(request: ConnectorCreateRequest,
+    tenant: TenantContext = Depends(get_tenant)):
     """
     Create a new data source connector.
     
@@ -144,6 +150,7 @@ async def create_connector(request: ConnectorCreateRequest):
     """
     try:
         db = get_database()
+        repo = ConnectorRepository(db, tenant)
         data_sources_col = db.data_sources
         existing = await data_sources_col.find_one({'name': request.name})
         if existing:
@@ -161,7 +168,8 @@ async def create_connector(request: ConnectorCreateRequest):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to create connector')
 
 @router.post('/{connector_id}/test', response_model=TestConnectionResponse)
-async def test_connector(connector_id: str):
+async def test_connector(connector_id: str,
+    tenant: TenantContext = Depends(get_tenant)):
     """
     Test a data source connector connection (KILLER FEATURE).
     
@@ -184,6 +192,7 @@ async def test_connector(connector_id: str):
 
     try:
         db = get_database()
+        repo = ConnectorRepository(db, tenant)
         data_sources_col = db.data_sources
         if not ObjectId.is_valid(connector_id):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid connector ID format')
@@ -214,7 +223,8 @@ async def test_connector(connector_id: str):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to test connector')
 
 @router.get('/{connector_id}/schema')
-async def get_connector_schema(connector_id: str):
+async def get_connector_schema(connector_id: str,
+    tenant: TenantContext = Depends(get_tenant)):
     """
     Extract database schema from a connector (SCHEMA INTROSPECTION).
     
@@ -249,6 +259,7 @@ async def get_connector_schema(connector_id: str):
 
     try:
         db = get_database()
+        repo = ConnectorRepository(db, tenant)
         data_sources_col = db.data_sources
         if not ObjectId.is_valid(connector_id):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid connector ID format')
@@ -275,8 +286,28 @@ async def get_connector_schema(connector_id: str):
         logger.error(f'Error extracting schema: {str(e)}')
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to extract schema')
 
+
+
+@router.get("/{connector_id}")
+async def get_connector_by_id(
+    connector_id: str,
+    tenant: TenantContext = Depends(get_tenant),
+):
+    """
+    Retrieve a single connector by ID.
+    Returns 404 when the connector does not exist OR belongs to a different
+    tenant (ADR-001: 404-not-403 policy; never confirm cross-tenant existence).
+    """
+    db = get_database()
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    repo = ConnectorRepository(db, tenant)
+    connector = await repo.get_by_id_raw(connector_id)
+    return _dhc_public_config(connector)
+
 @router.delete('/{connector_id}', status_code=status.HTTP_200_OK)
-async def delete_connector(connector_id: str):
+async def delete_connector(connector_id: str,
+    tenant: TenantContext = Depends(get_tenant)):
     """
     Delete a data source connector.
     
@@ -288,6 +319,7 @@ async def delete_connector(connector_id: str):
     """
     try:
         db = get_database()
+        repo = ConnectorRepository(db, tenant)
         data_sources_col = db.data_sources
         if not ObjectId.is_valid(connector_id):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid connector ID format')

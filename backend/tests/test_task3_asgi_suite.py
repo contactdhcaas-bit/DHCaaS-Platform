@@ -428,9 +428,29 @@ class TestTask3ConnectorCredentialClosure:
                 assert resp.status_code in (401, 403), \
                     f"Anonymous {method} {path} returned {resp.status_code}"
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="ADR-001 TenantContext repository layer not yet implemented",
-    )
-    async def test_14_cross_tenant_connector_returns_404(self):
-        assert False, "Cross-tenant isolation pending ADR-001"
+    async def test_14_cross_tenant_connector_returns_404(self, client, connector_payload):
+        from app.core.security import create_access_token
+        from bson import ObjectId
+
+        # 1. Create connector under primary tenant (user A via authenticated client)
+        resp = await client.post("/api/v1/connectors/", json=connector_payload)
+        assert resp.status_code == 201, f"Expected 201, got {resp.status_code}: {resp.text}"
+        cid = resp.json()["id"]
+
+        # 2. Forge Tenant B token with distinct user_id
+        user_b_id = str(ObjectId())
+        try:
+            # If function expects data dict
+            token_b = create_access_token(data={"sub": user_b_id, "user_id": user_b_id})
+        except TypeError:
+            # If function expects sub string
+            token_b = create_access_token(user_b_id)
+            
+        tenant_b_headers = {"Authorization": f"Bearer {token_b}"}
+
+        # 3. Tenant B requests Tenant A connector -> MUST return 404 per ADR-001
+        res_get = await client.get(f"/api/v1/connectors/{cid}", headers=tenant_b_headers)
+        assert res_get.status_code == 404, f"Cross-tenant leak! Expected 404, got {res_get.status_code}"
+
+        # 4. Clean up connector
+        await client.delete(f"/api/v1/connectors/{cid}")

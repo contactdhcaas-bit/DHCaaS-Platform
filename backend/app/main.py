@@ -36,6 +36,14 @@ async def lifespan(app: FastAPI):
     logger.info('?? Health Check: http://localhost:8000/health')
     logger.info('=' * 60)
     await connect_to_mongo()
+    # ADR-001: create tenant-scoped compound index at startup
+    try:
+        from app.core.database import db_instance as _dbi
+        if _dbi.db is not None:
+            await ConnectorRepository.ensure_indexes(_dbi.db)
+    except Exception as _e:
+        print(f'[WARN] ensure_indexes: {_e}')
+
     logger.info('? DHCaaS API Started Successfully!')
     logger.info('=' * 60)
     yield
@@ -93,6 +101,7 @@ async def internal_server_error_handler(request, exc):
 # BEGIN DHC_R2_VALIDATION_HANDLER_V1
 from fastapi.exceptions import RequestValidationError as _DHCR2ValidationError
 from fastapi.responses import JSONResponse as _DHCR2JSONResponse
+from app.repositories.connector_repository import ConnectorRepository
 
 
 @app.exception_handler(_DHCR2ValidationError)
