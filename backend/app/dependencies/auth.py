@@ -38,24 +38,20 @@ async def get_current_user(
     try:
         # Decode JWT token
         token = credentials.credentials
-        payload = jwt.decode(
-            token,
-            settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM], audience=settings.JWT_AUDIENCE)
 
-        user_id: str = payload.get("user_id")
-        if user_id is None:
+        
+        # Task 4: validate issuer (belt-and-suspenders)
+
+        if payload.get("iss") != settings.JWT_ISSUER:
+
             raise credentials_exception
 
-        # Check token expiration
-        exp = payload.get("exp")
-        if exp is None or datetime.utcnow().timestamp() > exp:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token has expired",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+
+        
+        user_id: str = payload.get("user_id") or payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
 
     except JWTError:
         raise credentials_exception

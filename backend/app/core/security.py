@@ -1,4 +1,4 @@
-﻿# app/core/security.py
+# app/core/security.py
 """
 DHCaaS Security Utilities
 Password hashing and JWT token management using industry best practices.
@@ -18,6 +18,8 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 
 from app.core.config import settings
+import time
+from uuid import uuid4
 
 
 logger = logging.getLogger(__name__)
@@ -90,56 +92,34 @@ def create_access_token(
     expires_delta: Optional[timedelta] = None
 ) -> str:
     """
-    Create a JWT access token with custom payload.
-    
-    Token payload includes:
-    - sub: User ID (subject)
-    - email: User email
-    - role: User role (admin, editor, viewer)
-    - company_id: Company ID (for multi-tenancy)
-    - exp: Expiration timestamp
-    - iat: Issued at timestamp
-    
-    Args:
-        data: Dictionary containing user information (user_id, email, role, company_id)
-        expires_delta: Optional custom expiration time. Defaults to ACCESS_TOKEN_EXPIRE_MINUTES
-        
-    Returns:
-        str: Encoded JWT token
-        
-    Example:
-        >>> token = create_access_token({
-        ...     "user_id": "507f1f77bcf86cd799439011",
-        ...     "email": "user@example.com",
-        ...     "role": "editor",
-        ...     "company_id": "507f1f77bcf86cd799439012"
-        ... })
-        >>> print(token)
-        eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    Mint a JWT with the full RFC 7519 standard claim set.
+    All timestamps use int(time.time()) -- timezone-independent (F6 removed).
     """
-    to_encode = data.copy()
-    
-    # Set expiration time
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
-    # Add standard JWT claims
-    to_encode.update({
-        "exp": expire,  # Expiration time
-        "iat": datetime.utcnow(),  # Issued at
-        "sub": str(data.get("user_id")),  # Subject (user ID)
-    })
-    
-    # Encode JWT
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM
+    now = int(time.time())
+    ttl = (
+        int(expires_delta.total_seconds())
+        if expires_delta
+        else settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
-    
-    return encoded_jwt
+    # tenant_id per ADR-001: company_id (shared) or user_id (per-user fallback)
+    _company = data.get("company_id")
+    tenant_id = str(_company) if _company else str(data.get("user_id", ""))
+    payload: dict = {
+        # RFC 7519 registered claims
+        "iss": settings.JWT_ISSUER,
+        "aud": settings.JWT_AUDIENCE,
+        "sub": str(data.get("user_id", "")),
+        "iat": now,
+        "nbf": now,
+        "exp": now + ttl,
+        "jti": str(uuid4()),
+        # Application claims
+        "user_id": str(data.get("user_id", "")),   # kept for one-release compat
+        "tenant_id": tenant_id,
+        "role": data.get("role", ""),
+        "email": data.get("email", ""),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
@@ -164,11 +144,7 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
         {'user_id': '123', 'email': 'user@example.com', 'sub': '123', 'exp': 1234567890, 'iat': 1234567890}
     """
     try:
-        payload = jwt.decode(
-            token,
-            settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM], audience=settings.JWT_AUDIENCE)
         return payload
     except JWTError as e:
         logger.warning(f"JWT decode error: {e}")

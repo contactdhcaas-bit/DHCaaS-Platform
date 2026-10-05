@@ -150,9 +150,13 @@ async def client():
         "created_at": now, "updated_at": now,
     })
     token = jwt.encode(
-        {"user_id": str(oid), "sub": str(oid), "role": "admin",
-         "exp": int(time.time()) + 3600,
-         "iat": int(time.time())},
+        {
+                "user_id": str(oid), "sub": str(oid), "role": "admin",
+                "iss": settings.JWT_ISSUER, "aud": settings.JWT_AUDIENCE,
+                "tenant_id": str(oid),
+                "nbf": int(time.time()), "exp": int(time.time()) + 3600,
+                "iat": int(time.time()),
+            },
         settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     token = token.decode() if isinstance(token, bytes) else token
 
@@ -475,12 +479,12 @@ class TestTask3ConnectorCredentialClosure:
         # 2. Mint a valid JWT for user B
         token_b = _jwt.encode(
             {
-                "user_id": str(b_oid),
-                "sub": str(b_oid),
-                "role": "admin",
-                "exp": int(time.time()) + 3600,
-                "iat": int(time.time()),
-            },
+                      "user_id": str(b_oid), "sub": str(b_oid), "role": "admin",
+                      "iss": settings.JWT_ISSUER, "aud": settings.JWT_AUDIENCE,
+                      "tenant_id": str(b_oid),
+                      "nbf": int(time.time()), "exp": int(time.time()) + 3600,
+                      "iat": int(time.time()),
+                  },
             settings.JWT_SECRET_KEY,
             algorithm=settings.JWT_ALGORITHM,
         )

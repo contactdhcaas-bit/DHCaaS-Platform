@@ -36,6 +36,8 @@ class Settings(BaseSettings):
         description="Secret key for JWT encoding/decoding (min 256-bit)"
     )
     JWT_ALGORITHM: str = Field(default="HS256", description="JWT signing algorithm")
+    JWT_ISSUER: str = Field(default="dhcaas-api", description="JWT iss claim")
+    JWT_AUDIENCE: str = Field(default="dhcaas-api", description="JWT aud claim")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, description="JWT access token expiration time in minutes")
     REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, description="JWT refresh token expiration time in days")
     
@@ -94,3 +96,31 @@ def get_settings() -> Settings:
     Usage: settings = Depends(get_settings)
     """
     return settings
+
+
+# -----------------------------------------------------------------------
+# JWT key safety guard -- called from main.py lifespan
+# -----------------------------------------------------------------------
+_JWT_PLACEHOLDERS: frozenset = frozenset({
+    "changethis", "changeme", "secret", "your-secret-key", "supersecret",
+    "development", "jwt-secret-key",
+    "temporary-secret-key-change-in-production-min-32-chars",
+    "temporary-secret-key",
+})
+
+
+def _assert_jwt_key_safe(key: str, env: str) -> None:
+    """Fail closed in production/staging; no-op in development."""
+    if env.lower() not in ("production", "prod", "staging"):
+        return
+    if not key or len(key.encode()) < 32:
+        raise RuntimeError(
+            "JWT_SECRET_KEY must be at least 32 bytes in production. "
+            "Set JWT_SECRET_KEY in the environment."
+        )
+    if key.lower().strip() in _JWT_PLACEHOLDERS:
+        raise RuntimeError(
+            "JWT_SECRET_KEY is a known placeholder value. "
+            "Replace it with a cryptographically random secret."
+        )
+

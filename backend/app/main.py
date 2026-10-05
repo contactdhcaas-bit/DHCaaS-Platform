@@ -35,6 +35,8 @@ async def lifespan(app: FastAPI):
     logger.info('?? Documentation: http://localhost:8000/docs')
     logger.info('?? Health Check: http://localhost:8000/health')
     logger.info('=' * 60)
+    # Task 4: fail-closed JWT key guard
+    _assert_jwt_key_safe(settings.JWT_SECRET_KEY, settings.ENVIRONMENT)
     await connect_to_mongo()
     # ADR-001: create tenant-scoped compound index at startup
     try:
@@ -102,6 +104,8 @@ async def internal_server_error_handler(request, exc):
 from fastapi.exceptions import RequestValidationError as _DHCR2ValidationError
 from fastapi.responses import JSONResponse as _DHCR2JSONResponse
 from app.repositories.connector_repository import ConnectorRepository
+from app.core.config import _assert_jwt_key_safe
+from app.core.config import settings
 
 
 @app.exception_handler(_DHCR2ValidationError)
