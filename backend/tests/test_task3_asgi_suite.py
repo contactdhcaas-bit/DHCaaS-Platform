@@ -428,29 +428,81 @@ class TestTask3ConnectorCredentialClosure:
                 assert resp.status_code in (401, 403), \
                     f"Anonymous {method} {path} returned {resp.status_code}"
 
-    async def test_14_cross_tenant_connector_returns_404(self, client, connector_payload):
-        from app.core.security import create_access_token
+    async def test_14_cross_tenant_connector_returns_404(self, client):
+        """
+        ADR-001: authenticated user B (different tenant) must get 404, not 401/403.
+        User B is seeded into the throwaway DB so auth succeeds.
+        ConnectorRepository filters by tenant_id -> no match -> 404.
+        """
+        import datetime
+        import time
         from bson import ObjectId
-
-        # 1. Create connector under primary tenant (user A via authenticated client)
-        resp = await client.post("/api/v1/connectors/", json=connector_payload)
-        assert resp.status_code == 201, f"Expected 201, got {resp.status_code}: {resp.text}"
-        cid = resp.json()["id"]
-
-        # 2. Forge Tenant B token with distinct user_id
-        user_b_id = str(ObjectId())
+        from httpx import AsyncClient, ASGITransport
+        from app.core.database import db_instance
+        from app.core.config import settings
+        from app.main import app as _app
         try:
-            # If function expects data dict
-            token_b = create_access_token(data={"sub": user_b_id, "user_id": user_b_id})
-        except TypeError:
-            # If function expects sub string
-            token_b = create_access_token(user_b_id)
-            
-        tenant_b_headers = {"Authorization": f"Bearer {token_b}"}
+            from jose import jwt as _jwt
+        except ImportError:
+            import jwt as _jwt
 
-        # 3. Tenant B requests Tenant A connector -> MUST return 404 per ADR-001
-        res_get = await client.get(f"/api/v1/connectors/{cid}", headers=tenant_b_headers)
-        assert res_get.status_code == 404, f"Cross-tenant leak! Expected 404, got {res_get.status_code}"
+        # 1. Seed user B into the same throwaway DB
+        b_oid = ObjectId()
+        now_b = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        try:
+            from app.core.security import get_password_hash
+            pw_b = get_password_hash("ci-not-used-b")
+        except Exception:
+            import bcrypt
+            pw_b = bcrypt.hashpw(b"ci-not-used-b", bcrypt.gensalt()).decode()
 
-        # 4. Clean up connector
-        await client.delete(f"/api/v1/connectors/{cid}")
+        await db_instance.db.users.insert_one({
+            "_id": b_oid,
+            "user_id": str(b_oid),
+            "email": f"ci-b-{b_oid}@tenant-b.example",
+            "full_name": "CI Tenant B",
+            "hashed_password": pw_b,
+            "is_active": True,
+            "is_superadmin": False,
+            "is_verified": True,
+            "role": "admin",
+            "status": "active",
+            "subscription_status": "active",
+            "created_at": now_b,
+            "updated_at": now_b,
+        })
+
+        # 2. Mint a valid JWT for user B
+        token_b = _jwt.encode(
+            {
+                "user_id": str(b_oid),
+                "sub": str(b_oid),
+                "role": "admin",
+                "exp": int(time.time()) + 3600,
+                "iat": int(time.time()),
+            },
+            settings.JWT_SECRET_KEY,
+            algorithm=settings.JWT_ALGORITHM,
+        )
+        token_b = token_b.decode() if isinstance(token_b, bytes) else token_b
+
+        # 3. GET connector as user B (different tenant_id)
+        transport = ASGITransport(app=_app, raise_app_exceptions=False)
+        async with AsyncClient(
+            transport=transport,
+            base_url="http://testserver",
+            headers={"Authorization": f"Bearer {token_b}"},
+            follow_redirects=True,
+        ) as client_b:
+            res_get = await client_b.get(
+                f"/api/v1/connectors/{_state['connector_id']}"
+            )
+
+        # 4. Cleanup user B
+        await db_instance.db.users.delete_one({"_id": b_oid})
+
+        # 5. ADR-001: 404, never 401 (B authenticated) or 403 (B exists but wrong tenant)
+        assert res_get.status_code == 404, (
+            f"Cross-tenant leak! Expected 404, got {res_get.status_code}. "
+            f"Body: {res_get.text[:200]}"
+        )
