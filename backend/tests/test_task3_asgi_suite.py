@@ -510,3 +510,59 @@ class TestTask3ConnectorCredentialClosure:
             f"Cross-tenant leak! Expected 404, got {res_get.status_code}. "
             f"Body: {res_get.text[:200]}"
         )
+
+
+# BEGIN DHC TASK3 PRIVATE TARGET FIXTURE
+import pytest as _dhc_pytest
+
+
+@_dhc_pytest.fixture(autouse=True)
+def _dhc_task3_private_connector_target(monkeypatch, connector_payload):
+    import app.api.v1.endpoints.connectors as endpoints
+
+    if not isinstance(connector_payload, dict):
+        raise AssertionError(
+            "connector_payload must be a dictionary for this fixture adapter"
+        )
+
+    if "config" in connector_payload:
+        config = connector_payload["config"]
+    else:
+        config = connector_payload
+
+    if not isinstance(config, dict) or "host" not in config:
+        raise AssertionError(
+            "Expected connector_payload['config']['host'] or "
+            "connector_payload['host']; adapt this fixture explicitly"
+        )
+
+    original_host = config["host"]
+    if not isinstance(original_host, str):
+        raise AssertionError("Connector fixture host must be a string")
+
+    normalized_host = original_host.strip().lower().rstrip(".")
+    if normalized_host in {
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "[::1]",
+    }:
+        # Literal RFC1918 target: no DNS and no loopback-policy exception.
+        # The Task 3 connection tester must remain mocked.
+        monkeypatch.setitem(config, "host", "10.254.0.1")
+
+    class _Task3SettingsProxy:
+        ALLOW_PRIVATE_CONNECTORS = True
+
+        def __init__(self, original):
+            self._original = original
+
+        def __getattr__(self, name):
+            return getattr(self._original, name)
+
+    monkeypatch.setattr(
+        endpoints,
+        "settings",
+        _Task3SettingsProxy(endpoints.settings),
+    )
+# END DHC TASK3 PRIVATE TARGET FIXTURE

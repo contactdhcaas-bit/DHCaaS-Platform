@@ -2,6 +2,7 @@
 Cloud Connectors API Endpoints
 Manages database connections (PostgreSQL, MySQL) with test functionality and schema introspection.
 """
+from app.core.config import settings
 from app.core.secret_store import SecretStore as _DHCSecretStore
 _dhc_secret_store = _DHCSecretStore()
 _dhc_task3_marker = 'DHC_TASK3_PASSWORD_ENVELOPE_V1'
@@ -41,6 +42,7 @@ import os
 from app.core.tenant import TenantContext
 from app.dependencies.tenant import get_tenant
 from app.repositories.connector_repository import ConnectorRepository
+from app.core.ssrf_guard import validate_connector_target, SSRFBlocked, parse_private_setting
 
 
 def _connector_test_enabled() -> bool:
@@ -151,6 +153,23 @@ async def create_connector(request: ConnectorCreateRequest,
     try:
         db = get_database()
         repo = ConnectorRepository(db, tenant)
+        # SSRF Protection: Validate target host & port before persistence
+        allow_private = parse_private_setting(getattr(settings, "ALLOW_PRIVATE_CONNECTORS", False))
+        cfg_dict = request.config.model_dump() if hasattr(request.config, "model_dump") else (request.config.dict() if hasattr(request.config, "dict") else dict(request.config))
+        if "host" in cfg_dict and "port" in cfg_dict:
+            try:
+                target = await validate_connector_target(
+                    str(cfg_dict["host"]),
+                    int(cfg_dict["port"]),
+                    allow_private=allow_private,
+                )
+                if hasattr(request.config, "host"):
+                    request.config.host = target.hostname
+            except SSRFBlocked as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"SSRF Protection: {str(exc)}",
+                )
         data_sources_col = db.data_sources
         existing = await data_sources_col.find_one({'name': request.name})
         if existing:
@@ -199,6 +218,21 @@ async def test_connector(connector_id: str,
         connector = await data_sources_col.find_one({'_id': ObjectId(connector_id)})
         if not connector:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Connector with ID '{connector_id}' not found")
+        # SSRF Protection: Re-validate host right before network testing (Anti-DNS Rebinding)
+        allow_private = parse_private_setting(getattr(settings, "ALLOW_PRIVATE_CONNECTORS", False))
+        c_cfg = connector.get("config", {}) if isinstance(connector, dict) else {}
+        if "host" in c_cfg and "port" in c_cfg:
+            try:
+                await validate_connector_target(
+                    str(c_cfg["host"]),
+                    int(c_cfg["port"]),
+                    allow_private=allow_private,
+                )
+            except SSRFBlocked as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"SSRF Protection: {str(exc)}",
+                )
         connector_type = connector['type']
         config = _dhc_execution_config(connector)
         logger.info(f"Testing {connector_type} connector: {connector['name']}")
