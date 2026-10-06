@@ -98,7 +98,7 @@ async def not_found_handler(request, exc):
 async def internal_server_error_handler(request, exc):
     """Custom 500 error handler"""
     logger.error(f'Internal server error: {str(exc)}', exc_info=True)
-    return JSONResponse(status_code=500, content={'error': 'Internal Server Error', 'message': 'An unexpected error occurred. Please contact support if this persists.', 'status_code': 500, 'timestamp': datetime.utcnow().isoformat(), 'support': 'support@dhcaas.com'})
+    return JSONResponse(status_code=500, content={'exc_type': type(exc).__name__, 'detail': str(exc), 'path': str(request.url.path)})
 
 # BEGIN DHC_R2_VALIDATION_HANDLER_V1
 from fastapi.exceptions import RequestValidationError as _DHCR2ValidationError
