@@ -17,8 +17,12 @@ def _dhc_encrypt_connector_doc(document):
     document['config'] = config
     return document
 
-def _dhc_public_config(config):
-    return {key: value for key, value in config.items() if key != 'password'}
+_ALLOWED_PUBLIC_FIELDS: frozenset = frozenset({"host", "port", "username", "database", "ssl"})
+
+def _dhc_public_config(connector_or_config: dict) -> dict:
+    """R3 allowlist: return only explicitly permitted public config fields."""
+    cfg = connector_or_config.get("config", connector_or_config) if isinstance(connector_or_config, dict) else {}
+    return {k: v for k, v in cfg.items() if k in _ALLOWED_PUBLIC_FIELDS}
 
 def _dhc_execution_config(connector):
     config = dict(connector['config'])
@@ -127,8 +131,8 @@ async def list_connectors(connector_type: Optional[ConnectorType]=None,
         query_filter = {}
         if connector_type:
             query_filter['type'] = connector_type.value
-        connectors_cursor = data_sources_col.find(query_filter).sort('created_at', -1)
-        connectors_list = await connectors_cursor.to_list(length=None)
+        connectors_cursor = await repo.list_for_tenant()
+        connectors_list = connectors_cursor
         formatted_connectors = [format_connector_response(conn) for conn in connectors_list]
         logger.info(f'Listed {len(formatted_connectors)} connectors')
         return ConnectorListResponse(total=len(formatted_connectors), connectors=formatted_connectors)
@@ -176,6 +180,7 @@ async def create_connector(request: ConnectorCreateRequest,
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Connector with name '{request.name}' already exists")
         now = datetime.utcnow()
         connector_doc = {'name': request.name, 'type': request.type.value, 'config': request.config.dict(), 'status': 'active', 'last_tested_at': None, 'last_test_status': None, 'created_at': now, 'updated_at': now}
+        repo.stamp_tenant(connector_doc)
         result = await data_sources_col.insert_one(_dhc_encrypt_connector_doc(connector_doc))
         connector_doc['_id'] = result.inserted_id
         logger.info(f'Created connector: {request.name} ({request.type.value})')
@@ -215,7 +220,7 @@ async def test_connector(connector_id: str,
         data_sources_col = db.data_sources
         if not ObjectId.is_valid(connector_id):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid connector ID format')
-        connector = await data_sources_col.find_one({'_id': ObjectId(connector_id)})
+        connector = await repo.get_by_id_raw(connector_id)
         if not connector:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Connector with ID '{connector_id}' not found")
         # SSRF Protection: Re-validate host right before network testing (Anti-DNS Rebinding)
@@ -223,11 +228,7 @@ async def test_connector(connector_id: str,
         c_cfg = connector.get("config", {}) if isinstance(connector, dict) else {}
         if "host" in c_cfg and "port" in c_cfg:
             try:
-                await validate_connector_target(
-                    str(c_cfg["host"]),
-                    int(c_cfg["port"]),
-                    allow_private=allow_private,
-                )
+                target = await validate_connector_target(str(c_cfg["host"]), int(c_cfg["port"]), allow_private=allow_private)
             except SSRFBlocked as exc:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -237,7 +238,7 @@ async def test_connector(connector_id: str,
         config = _dhc_execution_config(connector)
         logger.info(f"Testing {connector_type} connector: {connector['name']}")
         if connector_type == 'postgres':
-            test_result = await run_in_threadpool(ConnectionTester.test_postgres, config)
+            test_result = await run_in_threadpool(ConnectionTester.test_postgres, config, target=target)
         elif connector_type == 'mysql':
             test_result = await run_in_threadpool(ConnectionTester.test_mysql, config)
         else:
@@ -297,7 +298,7 @@ async def get_connector_schema(connector_id: str,
         data_sources_col = db.data_sources
         if not ObjectId.is_valid(connector_id):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid connector ID format')
-        connector = await data_sources_col.find_one({'_id': ObjectId(connector_id)})
+        connector = await repo.get_by_id_raw(connector_id)
         if not connector:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Connector with ID '{connector_id}' not found")
         connector_type = connector['type']
@@ -339,34 +340,39 @@ async def get_connector_by_id(
     connector = await repo.get_by_id_raw(connector_id)
     return _dhc_public_config(connector)
 
-@router.delete('/{connector_id}', status_code=status.HTTP_200_OK)
-async def delete_connector(connector_id: str,
-    tenant: TenantContext = Depends(get_tenant)):
+@router.delete("/{connector_id}")
+async def delete_connector(
+    connector_id: str,
+    tenant: TenantContext = Depends(get_tenant),
+):
     """
-    Delete a data source connector.
-    
-    Path Parameters:
-        connector_id: MongoDB ObjectId of the connector
-    
-    Returns:
-        Success message
+    Delete a connector owned by the caller's tenant.
+    Returns 404 when the connector does not exist or belongs to another
+    tenant (ADR-001: 404-not-403; never confirm cross-tenant existence).
     """
     try:
         db = get_database()
+        if db is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database not available",
+            )
         repo = ConnectorRepository(db, tenant)
-        data_sources_col = db.data_sources
-        if not ObjectId.is_valid(connector_id):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid connector ID format')
-        connector = await data_sources_col.find_one({'_id': ObjectId(connector_id)})
-        if not connector:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Connector with ID '{connector_id}' not found")
-        result = await data_sources_col.delete_one({'_id': ObjectId(connector_id)})
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to delete connector')
-        logger.info(f"Deleted connector: {connector['name']} ({connector['type']})")
-        return {'message': f"Connector '{connector['name']}' deleted successfully", 'id': connector_id}
+
+        # 404 if missing or owned by another tenant
+        connector = await repo.get_by_id_raw(connector_id)
+
+        # Tenant-scoped delete: raises 404 itself on miss, returns None on success
+        await repo.delete(connector_id)
+
+        logger.info(f"Connector deleted: {connector.get('name')}")
+        return {"message": "Connector deleted successfully"}
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f'Error deleting connector: {str(e)}')
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Failed to delete connector')
+        logger.error(f"Error deleting connector: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete connector",
+        )
