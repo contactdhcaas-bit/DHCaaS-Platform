@@ -69,7 +69,7 @@ async def read_root():
     Returns basic information about the API and links to documentation.
     """
     db = get_database()
-    return {'message': 'DHCaaS Enterprise API is Running ??', 'service': 'Data Health Check as a Service', 'version': '2.0.0', 'status': 'operational', 'database': 'connected' if db else 'disconnected', 'timestamp': datetime.utcnow().isoformat(), 'authentication': {'type': 'JWT Bearer Token', 'endpoints': {'login': '/api/v1/auth/login', 'register': '/api/v1/auth/register', 'me': '/api/v1/auth/me'}}, 'documentation': {'swagger_ui': '/docs', 'redoc': '/redoc', 'openapi_json': '/api/v1/openapi.json'}, 'endpoints': {'health': '/health', 'scan_jobs': '/api/v1/scan-jobs', 'reports': '/api/v1/reports', 'auth': '/api/v1/auth', 'rules': '/api/v1/rules'}, 'support': {'email': 'support@dhcaas.com', 'docs': 'https://docs.dhcaas.com'}}
+    return {'message': 'DHCaaS Enterprise API is Running ??', 'service': 'Data Health Check as a Service', 'version': '2.0.0', 'status': 'operational', 'database': 'connected' if db is not None else 'disconnected', 'timestamp': datetime.utcnow().isoformat(), 'authentication': {'type': 'JWT Bearer Token', 'endpoints': {'login': '/api/v1/auth/login', 'register': '/api/v1/auth/register', 'me': '/api/v1/auth/me'}}, 'documentation': {'swagger_ui': '/docs', 'redoc': '/redoc', 'openapi_json': '/api/v1/openapi.json'}, 'endpoints': {'health': '/health', 'scan_jobs': '/api/v1/scan-jobs', 'reports': '/api/v1/reports', 'auth': '/api/v1/auth', 'rules': '/api/v1/rules'}, 'support': {'email': 'support@dhcaas.com', 'docs': 'https://docs.dhcaas.com'}}
 
 @app.get('/health', tags=['health'])
 async def health_check():
@@ -87,7 +87,7 @@ async def health_check():
         dict: Service health status and metadata
     """
     db = get_database()
-    return {'status': 'healthy', 'service': 'dhcaas-backend', 'version': '2.0.0', 'timestamp': datetime.utcnow().isoformat(), 'checks': {'api': 'operational', 'database': 'connected' if db else 'disconnected', 'authentication': 'active'}}
+    return {'status': 'healthy', 'service': 'dhcaas-backend', 'version': '2.0.0', 'timestamp': datetime.utcnow().isoformat(), 'checks': {'api': 'operational', 'database': 'connected' if db is not None else 'disconnected', 'authentication': 'active'}}
 
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
@@ -98,7 +98,7 @@ async def not_found_handler(request, exc):
 async def internal_server_error_handler(request, exc):
     """Custom 500 error handler"""
     logger.error(f'Internal server error: {str(exc)}', exc_info=True)
-    return JSONResponse(status_code=500, content={'exc_type': type(exc).__name__, 'detail': str(exc), 'path': str(request.url.path)})
+    return JSONResponse(status_code=500, content={'error': 'Internal Server Error', 'message': 'An unexpected error occurred. Please contact support if this persists.', 'status_code': 500, 'timestamp': datetime.utcnow().isoformat(), 'support': 'support@dhcaas.com'})
 
 # BEGIN DHC_R2_VALIDATION_HANDLER_V1
 from fastapi.exceptions import RequestValidationError as _DHCR2ValidationError
