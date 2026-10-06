@@ -65,7 +65,7 @@ const MDMMatching: React.FC = () => {
     try {
       const columns = matchColumns.split(',').map(col => col.trim());
       
-      const response = await fetch('http://localhost:8000/api/v1/mdm/match', {
+      const response = await fetch('/api/v1/mdm/match', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

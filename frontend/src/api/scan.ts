@@ -22,7 +22,7 @@ export function reportLink(reportUrl: string) {
 export async function getScanViolations(scanId: string) {
   const response = await fetch(`/api/v1/scan-jobs/violations/${scanId}`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json'
     }
   });

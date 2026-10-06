@@ -291,7 +291,7 @@ const ReportBuilderPage: React.FC = () => {
       };
 
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:8000/api/v1/reports', {
+      const response = await fetch('/api/v1/reports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

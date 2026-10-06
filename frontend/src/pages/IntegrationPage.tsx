@@ -171,7 +171,7 @@ const IntegrationPage: React.FC = () => {
     formData.append('rules', selectedRules.join(','));
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/integration/clean', {
+      const response = await fetch('/api/v1/integration/clean', {
         method: 'POST',
         body: formData,
       });

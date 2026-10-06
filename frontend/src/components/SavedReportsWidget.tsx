@@ -54,7 +54,7 @@ const SavedReportsWidget: React.FC = () => {
       setError('');
 
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:8000/api/v1/reports', {
+      const response = await fetch('/api/v1/reports', {
         headers: {
           Authorization: `Bearer ${token}`,
         },

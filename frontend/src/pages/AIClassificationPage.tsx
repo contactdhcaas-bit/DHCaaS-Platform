@@ -103,7 +103,7 @@ const AIClassificationPage: React.FC = () => {
     try {
       // Simulate minimum 2 seconds for dramatic effect
       const [response] = await Promise.all([
-        fetch('http://localhost:8000/api/v1/analysis/scan', {
+        fetch('/api/v1/analysis/scan', {
           method: 'POST',
           body: formData,
         }),

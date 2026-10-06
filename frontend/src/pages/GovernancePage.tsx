@@ -106,7 +106,7 @@ const GovernancePage: React.FC = () => {
   const fetchPolicies = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/v1/governance/policies');
+      const response = await fetch('/api/v1/governance/policies');
       const data = await response.json();
       setPolicies(data);
 
@@ -122,7 +122,7 @@ const GovernancePage: React.FC = () => {
 
   const fetchViolations = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/governance/violations?resolved=false');
+      const response = await fetch('/api/v1/governance/violations?resolved=false');
       const data = await response.json();
       setViolations(data);
 
@@ -141,7 +141,7 @@ const GovernancePage: React.FC = () => {
   // ===== CREATE POLICY =====
   const handleCreatePolicy = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/governance/policies', {
+      const response = await fetch('/api/v1/governance/policies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newPolicy),

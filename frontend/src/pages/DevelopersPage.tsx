@@ -67,7 +67,7 @@ const DevelopersPage: React.FC = () => {
   const fetchKeys = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/v1/developers/keys');
+      const response = await fetch('/api/v1/developers/keys');
       
       if (!response.ok) {
         throw new Error('Failed to fetch API keys');
@@ -94,7 +94,7 @@ const DevelopersPage: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/developers/keys', {
+      const response = await fetch('/api/v1/developers/keys', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
