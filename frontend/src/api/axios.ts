@@ -13,7 +13,7 @@ const api = axios.create({
 // Request interceptor: Automatically add JWT token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('dhcaas_token');
+    const token = localStorage.getItem('access_token');
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -39,11 +39,11 @@ api.interceptors.response.use(
   (error) => {
     console.error('❌ Response error:', error.response?.status, error.response?.data);
     
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    if (error.response?.status === 401) {
       console.warn('🔓 Token expired or invalid - redirecting to login');
       
       // Clear auth data
-      localStorage.removeItem('dhcaas_token');
+      localStorage.removeItem('access_token');
       localStorage.removeItem('dhcaas_user');
       
       // Redirect to login

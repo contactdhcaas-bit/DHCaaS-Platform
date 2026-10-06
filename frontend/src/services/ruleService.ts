@@ -132,7 +132,7 @@ export interface Stats {
 
 class RuleService {
   private getAuthHeaders() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     console.log('🔑 [getAuthHeaders] Token exists:', !!token);
@@ -167,7 +167,7 @@ class RuleService {
     console.log('📥 [getDatasets] STARTING DATASET FETCH');
     console.log('═══════════════════════════════════════════════════════');
     console.log('🌐 [getDatasets] API Base:', API_BASE);
-    console.log('🔑 [getDatasets] Auth Token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+    console.log('🔑 [getDatasets] Auth Token:', localStorage.getItem('access_token') ? 'Present' : 'Missing');
     
     const endpoints = [
       '/api/v1/datasets',

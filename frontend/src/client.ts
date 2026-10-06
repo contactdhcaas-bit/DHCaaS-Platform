@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Vite proxy will handle '/api' redirection in development
-const API_URL = '/api'; 
+const API_URL = '/api';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -13,7 +13,7 @@ export const apiClient = axios.create({
 // Automatically add Token to requests
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); 
+    const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

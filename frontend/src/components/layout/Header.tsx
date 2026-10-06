@@ -1,14 +1,11 @@
 // src/components/layout/Header.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
+import { useAuth } from "../../context/AuthContext";
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
-  const logout = useAuthStore((s) => s.logout);
-  const user = useAuthStore((s) => s.user);
-
-  const handleLogout = () => {
+      const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
   };

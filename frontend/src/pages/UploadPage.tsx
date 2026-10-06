@@ -90,8 +90,8 @@ const UploadPage: React.FC = () => {
       const response = await axios.post(url, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          ...(localStorage.getItem('token') && {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          ...(localStorage.getItem('access_token') && {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           }),
         },
         onUploadProgress: (progressEvent) => {

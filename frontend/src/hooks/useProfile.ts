@@ -27,7 +27,7 @@ export type CreateApiKeyResponse = {
 };
 
 const getAuthToken = (): string | null => {
-  let token = localStorage.getItem("token");
+  let token = localStorage.getItem("access_token");
   if (!token) {
     const raw = localStorage.getItem("dhc_auth_store");
     if (raw) {

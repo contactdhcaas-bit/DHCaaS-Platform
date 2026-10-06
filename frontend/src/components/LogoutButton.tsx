@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
-import { useAuthStore } from "../stores/authStore";
+import { useAuth } from "../context/AuthContext";
 
 type Props = {
   className?: string;
@@ -14,7 +14,7 @@ export default function LogoutButton({ className = "", label = "Logout" }: Props
 
   const onLogout = () => {
     // Clear tokens + persisted store
-    useAuthStore.getState().logout();
+    useAuth().logout();
 
     // Hard redirect is also ok, but navigate is usually enough
     navigate("/login", { replace: true });

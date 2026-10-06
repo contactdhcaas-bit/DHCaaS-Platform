@@ -1,0 +1,4005 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DHCaaS API",
+    "description": "\n    ## Data Health Check as a Service - Enterprise Backend\n\n    **DHCaaS** provides comprehensive data quality monitoring, governance,\n    and compliance management for enterprise data teams.\n\n    ### Key Features:\n    - ?? **Data Quality Scanning** - Multi-dimensional quality analysis\n    - ??? **Compliance Monitoring** - GDPR, CCPA, HIPAA compliance checks\n    - ?? **Predictive Analytics** - ML-powered anomaly detection\n    - ?? **Quality Metrics** - Completeness, validity, consistency, accuracy\n    - ?? **PII Detection** - Automatic sensitive data identification\n    - ?? **PDF Reports** - Professional compliance reports\n    - ?? **Authentication & RBAC** - Secure user management with role-based access\n\n    ### API Versions:\n    - **v1**: Current stable version (documented here)\n\n    ### Authentication:\n    - JWT-based authentication (Bearer token)\n    - Roles: admin, editor, viewer\n\n    ### Support:\n    - Documentation: https://docs.dhcaas.com\n    - Email: support@dhcaas.com\n    ",
+    "contact": {
+      "name": "DHCaaS Platform Team",
+      "url": "https://dhcaas.com/",
+      "email": "support@dhcaas.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://dhcaas.com/license"
+    },
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Register",
+        "description": "Register a new user account.\n\n**Features:**\n- Email uniqueness validation\n- Password hashing with bcrypt\n- Auto-generate JWT token\n- Default role: viewer",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegister"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login",
+        "description": "Authenticate user and return JWT token.\n\n**Features:**\n- Email and password validation\n- JWT token generation\n- Last login timestamp update\n- Audit logging",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Me",
+        "description": "Get current authenticated user information.\n\n**Requires:** Valid JWT token",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout",
+        "description": "Logout current user.\n\nNote: JWT tokens are stateless, so logout is handled on the client side\nby removing the token from storage. This endpoint exists for consistency\nand can be extended to implement token blacklisting if needed.",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/health": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Auth Health",
+        "description": "Authentication service health check.",
+        "operationId": "auth_health_api_v1_auth_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/": {
+      "get": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "List Users",
+        "description": "Get list of all users (Admin only).\n\n**Permissions:** Admin only\n\n**Features:**\n- Pagination support\n- Search by email or full name\n- Filter by role and active status\n- Returns total count and page info",
+        "operationId": "list_users_api_v1_users__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Items per page",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Items per page"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search by email or name",
+              "title": "Search"
+            },
+            "description": "Search by email or name"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by role",
+              "title": "Role"
+            },
+            "description": "Filter by role"
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by active status",
+              "title": "Is Active"
+            },
+            "description": "Filter by active status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Create User",
+        "description": "Create a new user (Admin only).\n\n**Permissions:** Admin only\n\n**Features:**\n- Admin can set user role (admin, editor, viewer)\n- Admin can set active and verified status\n- Passwords are securely hashed\n- Email uniqueness is enforced",
+        "operationId": "create_user_api_v1_users__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}": {
+      "get": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Get User",
+        "description": "Get user by ID (Admin only).\n\n**Permissions:** Admin only",
+        "operationId": "get_user_api_v1_users__user_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Update User",
+        "description": "Update user details (Admin only).\n\n**Permissions:** Admin only\n\n**Features:**\n- Partial updates supported (only send fields to update)\n- Can update role, active status, verified status\n- Can update email (with uniqueness check)\n- Can reset password",
+        "operationId": "update_user_api_v1_users__user_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Delete User",
+        "description": "Delete or deactivate user (Admin only).\n\n**Permissions:** Admin only\n\n**Features:**\n- Soft delete (default): Sets is_active=False\n- Hard delete: Permanently removes user from database\n- Cannot delete yourself (admin protection)\n\n**Parameters:**\n- hard_delete: If True, permanently deletes user. If False (default), soft deletes.",
+        "operationId": "delete_user_api_v1_users__user_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "hard_delete",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Permanently delete user (irreversible)",
+              "default": false,
+              "title": "Hard Delete"
+            },
+            "description": "Permanently delete user (irreversible)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/activate": {
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Activate User",
+        "description": "Reactivate a deactivated user (Admin only).\n\n**Permissions:** Admin only",
+        "operationId": "activate_user_api_v1_users__user_id__activate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/stats": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get Dashboard Stats",
+        "description": "Get dashboard statistics.",
+        "operationId": "get_dashboard_stats_api_v1_dashboard_stats_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scan-jobs/": {
+      "post": {
+        "tags": [
+          "Scan Jobs"
+        ],
+        "summary": "Create Scan Job",
+        "description": "Create a new scan job by uploading a file\n- Validates file type\n- Processes file with scan service\n- Saves results to MongoDB\n- Returns scan summary",
+        "operationId": "create_scan_job_api_v1_scan_jobs__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "datasource_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Datasource Name"
+            }
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Owner"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_scan_job_api_v1_scan_jobs__post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Scan Jobs"
+        ],
+        "summary": "List Scan Jobs",
+        "description": "List all scan jobs with pagination\n- Returns jobs sorted by creation date (newest first)\n- Supports pagination\n- Filters by user if authenticated",
+        "operationId": "list_scan_jobs_api_v1_scan_jobs__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanJobListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scan-jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "Scan Jobs"
+        ],
+        "summary": "Get Scan Job",
+        "description": "Get detailed information about a specific scan job",
+        "operationId": "get_scan_job_api_v1_scan_jobs__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Scan Jobs"
+        ],
+        "summary": "Delete Scan Job",
+        "description": "Delete a scan job",
+        "operationId": "delete_scan_job_api_v1_scan_jobs__job_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scan-jobs/{job_id}/status": {
+      "get": {
+        "tags": [
+          "Scan Jobs"
+        ],
+        "summary": "Get Scan Job Status",
+        "description": "Get the status of a scan job",
+        "operationId": "get_scan_job_status_api_v1_scan_jobs__job_id__status_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scan-jobs/health/check": {
+      "get": {
+        "tags": [
+          "Scan Jobs"
+        ],
+        "summary": "Scan Jobs Health",
+        "description": "Health check endpoint",
+        "operationId": "scan_jobs_health_api_v1_scan_jobs_health_check_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/download-by-job/{job_id}": {
+      "get": {
+        "tags": [
+          "Reports",
+          "reports"
+        ],
+        "summary": "Download Report By Job Id",
+        "description": "Download PDF report using job_id from ScanEngine results.\n\nThis endpoint:\n1. Fetches the scan job from MongoDB\n2. Validates it's completed\n3. Transforms ScanEngine results to report format using ReportBuilder\n4. Generates professional PDF using HTML templates\n5. Returns PDF as downloadable file\n\nArgs:\n    job_id: Scan job UUID (e.g., d03e2e52-b6bb-4c5d-b86a-f03b801ae34b)\n    \nReturns:\n    PDF file download with real scan results\n    \nExample:\n    GET /api/v1/reports/download-by-job/d03e2e52-b6bb-4c5d-b86a-f03b801ae34b",
+        "operationId": "download_report_by_job_id_api_v1_reports_download_by_job__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/preview-by-job/{job_id}": {
+      "get": {
+        "tags": [
+          "Reports",
+          "reports"
+        ],
+        "summary": "Preview Report Data By Job",
+        "description": "Preview report data without generating PDF (for debugging).\n\nUseful for:\n- Debugging template issues\n- Verifying data transformation\n- Testing ReportBuilder logic\n\nArgs:\n    job_id: Scan job UUID\n    \nReturns:\n    JSON with complete report data structure",
+        "operationId": "preview_report_data_by_job_api_v1_reports_preview_by_job__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/scan-status/{job_id}": {
+      "get": {
+        "tags": [
+          "Reports",
+          "reports"
+        ],
+        "summary": "Get Scan Status For Report",
+        "description": "Check if a scan is ready for report generation.\n\nReturns quick status without generating the report.\nUseful for frontend polling before attempting download.\n\nArgs:\n    job_id: Scan job UUID\n    \nReturns:\n    JSON with scan status and report readiness",
+        "operationId": "get_scan_status_for_report_api_v1_reports_scan_status__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/download/{scan_id}": {
+      "get": {
+        "tags": [
+          "Reports",
+          "reports"
+        ],
+        "summary": "Download Report By Object Id",
+        "description": "[ALTERNATIVE] Download PDF report using MongoDB ObjectId.\n\nMost users should use /download-by-job/{job_id} instead.\nThis endpoint exists for backward compatibility.\n\nArgs:\n    scan_id: MongoDB ObjectId as string\n    \nReturns:\n    PDF file download",
+        "operationId": "download_report_by_object_id_api_v1_reports_download__scan_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/health": {
+      "get": {
+        "tags": [
+          "Reports",
+          "reports"
+        ],
+        "summary": "Reports Health",
+        "description": "Health check for reports service.\n\nVerifies:\n- MongoDB connectivity\n- PDF service availability\n- Report builder functionality",
+        "operationId": "reports_health_api_v1_reports_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rules/": {
+      "get": {
+        "tags": [
+          "Data Quality Rules"
+        ],
+        "summary": "List Rules",
+        "description": "List all data quality rules with optional filters.\n\nQuery Parameters:\n    connector_id: Filter rules by connector\n    table_name: Filter rules by table name\n    rule_type: Filter rules by type\n    severity: Filter rules by severity level\n    enabled: Filter by enabled/disabled status\n\nReturns:\n    List of data quality rules",
+        "operationId": "list_rules_api_v1_rules__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connector_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by connector ID",
+              "title": "Connector Id"
+            },
+            "description": "Filter by connector ID"
+          },
+          {
+            "name": "table_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by table name",
+              "title": "Table Name"
+            },
+            "description": "Filter by table name"
+          },
+          {
+            "name": "rule_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RuleType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by rule type",
+              "title": "Rule Type"
+            },
+            "description": "Filter by rule type"
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Severity"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by severity",
+              "title": "Severity"
+            },
+            "description": "Filter by severity"
+          },
+          {
+            "name": "enabled",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by enabled status",
+              "title": "Enabled"
+            },
+            "description": "Filter by enabled status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DQRuleListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Data Quality Rules"
+        ],
+        "summary": "Create Rule",
+        "description": "Create a new data quality rule.\n\nRequest Body:\n    rule_name: Unique name for the rule within connector\n    description: Optional description\n    connector_id: Target connector ID\n    table_name: Target table name\n    column_name: Target column name\n    rule_type: Type of rule (not_null, regex_match, numeric_range, string_length, allowed_values)\n    rule_config: Configuration for the rule type\n    severity: Rule severity (critical, high, medium, low)\n    enabled: Enable rule immediately (default: true)\n    sample_size: Optional row sampling limit\n\nReturns:\n    Created rule with metadata",
+        "operationId": "create_rule_api_v1_rules__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DQRuleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DQRuleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{rule_id}": {
+      "get": {
+        "tags": [
+          "Data Quality Rules"
+        ],
+        "summary": "Get Rule",
+        "description": "Get details of a specific rule.\n\nPath Parameters:\n    rule_id: MongoDB ObjectId of the rule\n\nReturns:\n    Rule details with metadata",
+        "operationId": "get_rule_api_v1_rules__rule_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DQRuleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Data Quality Rules"
+        ],
+        "summary": "Update Rule",
+        "description": "Update an existing data quality rule.\n\nPath Parameters:\n    rule_id: MongoDB ObjectId of the rule\n\nRequest Body:\n    Optional fields to update (rule_name, description, rule_config, severity, enabled, sample_size)\n\nReturns:\n    Updated rule with metadata",
+        "operationId": "update_rule_api_v1_rules__rule_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DQRuleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DQRuleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Data Quality Rules"
+        ],
+        "summary": "Delete Rule",
+        "description": "Delete a data quality rule.\n\nPath Parameters:\n    rule_id: MongoDB ObjectId of the rule\n\nReturns:\n    Success message with deleted rule ID",
+        "operationId": "delete_rule_api_v1_rules__rule_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DQRuleDeleteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{rule_id}/enable": {
+      "post": {
+        "tags": [
+          "Data Quality Rules"
+        ],
+        "summary": "Enable Rule",
+        "description": "Enable a data quality rule.\n\nPath Parameters:\n    rule_id: MongoDB ObjectId of the rule\n\nReturns:\n    Success message",
+        "operationId": "enable_rule_api_v1_rules__rule_id__enable_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{rule_id}/disable": {
+      "post": {
+        "tags": [
+          "Data Quality Rules"
+        ],
+        "summary": "Disable Rule",
+        "description": "Disable a data quality rule.\n\nPath Parameters:\n    rule_id: MongoDB ObjectId of the rule\n\nReturns:\n    Success message",
+        "operationId": "disable_rule_api_v1_rules__rule_id__disable_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/policies/": {
+      "get": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Get Policies",
+        "description": "Get all policies from the database.\n\nArgs:\n    enabled_only: If True, return only enabled policies\n\nReturns:\n    List of policies",
+        "operationId": "get_policies_api_v1_policies__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "enabled_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Enabled Only"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Create Policy",
+        "description": "Create a new policy.\n\nArgs:\n    policy: Policy data from request body\n\nReturns:\n    Created policy object",
+        "operationId": "create_policy_api_v1_policies__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/policies/{policy_id}": {
+      "get": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Get Policy",
+        "description": "Get a single policy by ID.\n\nArgs:\n    policy_id: Policy ID\n\nReturns:\n    Policy object",
+        "operationId": "get_policy_api_v1_policies__policy_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Update Policy",
+        "description": "Update an existing policy.\n\nArgs:\n    policy_id: Policy ID\n    policy: Updated policy data from request body\n\nReturns:\n    Updated policy object",
+        "operationId": "update_policy_api_v1_policies__policy_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Delete Policy",
+        "description": "Delete a policy by ID.\n\nArgs:\n    policy_id: Policy ID\n\nReturns:\n    Success message",
+        "operationId": "delete_policy_api_v1_policies__policy_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/datasets/": {
+      "get": {
+        "tags": [
+          "Datasets"
+        ],
+        "summary": "Get Datasets",
+        "operationId": "get_datasets_api_v1_datasets__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Owner"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/policies": {
+      "get": {
+        "tags": [
+          "Governance"
+        ],
+        "summary": "Get Governance Policies",
+        "description": "Get all governance policies.\n\nReturns:\n    List of governance policies (empty array if none exist)",
+        "operationId": "get_governance_policies_api_v1_governance_policies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Governance"
+        ],
+        "summary": "Create Governance Policy",
+        "description": "Create a new governance policy.\n\nArgs:\n    policy: Policy data from request body\n\nReturns:\n    Created policy object",
+        "operationId": "create_governance_policy_api_v1_governance_policies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GovernancePolicyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/governance/violations": {
+      "get": {
+        "tags": [
+          "Governance"
+        ],
+        "summary": "Get Governance Violations",
+        "description": "Get governance violations.\n\nArgs:\n    resolved: Filter by resolution status (default: False = unresolved only)\n\nReturns:\n    List of violations (empty array if none exist)",
+        "operationId": "get_governance_violations_api_v1_governance_violations_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "resolved",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Resolved"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/policies/{policy_id}": {
+      "put": {
+        "tags": [
+          "Governance"
+        ],
+        "summary": "Update Governance Policy",
+        "description": "Update an existing governance policy.\n\nArgs:\n    policy_id: Policy ID\n    policy: Updated policy data from request body\n\nReturns:\n    Updated policy object",
+        "operationId": "update_governance_policy_api_v1_governance_policies__policy_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GovernancePolicyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Governance"
+        ],
+        "summary": "Delete Governance Policy",
+        "description": "Delete a governance policy by ID.\n\nArgs:\n    policy_id: Policy ID\n\nReturns:\n    Success message",
+        "operationId": "delete_governance_policy_api_v1_governance_policies__policy_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/audit/logs": {
+      "get": {
+        "tags": [
+          "Audit Logs"
+        ],
+        "summary": "List Audit Logs",
+        "description": "Retrieve audit logs (Admin only)\n\nReturns paginated list of audit log entries\n\n**Permissions:** Admin only\n\n**Features:**\n- Pagination support\n- Returns total count and page info\n- Chronological order (newest first)",
+        "operationId": "list_audit_logs_api_v1_audit_logs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Items per page",
+              "default": 50,
+              "title": "Per Page"
+            },
+            "description": "Items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/scan": {
+      "post": {
+        "tags": [
+          "AI Classification"
+        ],
+        "summary": "Scan Dataset",
+        "description": "Analyze uploaded dataset and classify columns using AI engine.\n\nArgs:\n    file: Uploaded CSV or XLSX file (max 50MB)\n    \nReturns:\n    Classification results with dataset summary and column analysis\n    \nRaises:\n    HTTPException 400: Invalid file format or empty file\n    HTTPException 413: File too large\n    HTTPException 500: Analysis failed",
+        "operationId": "scan_dataset_api_v1_analysis_scan_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_scan_dataset_api_v1_analysis_scan_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Scan Dataset Api V1 Analysis Scan Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/connectors/": {
+      "get": {
+        "tags": [
+          "Cloud Connectors"
+        ],
+        "summary": "List Connectors",
+        "description": "List all saved data source connectors.\nPasswords are always masked in the response.\n\nQuery Parameters:\n    connector_type: Optional filter by connector type (postgres, mysql)\n\nReturns:\n    List of connectors with masked passwords",
+        "operationId": "list_connectors_api_v1_connectors__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connector_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ConnectorType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Connector Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Cloud Connectors"
+        ],
+        "summary": "Create Connector",
+        "description": "Create a new data source connector.\n\nRequest Body:\n    name: Unique connector name\n    type: Connector type (postgres, mysql)\n    config: Connection configuration with credentials\n\nReturns:\n    Created connector with masked password",
+        "operationId": "create_connector_api_v1_connectors__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectorCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/connectors/{connector_id}/test": {
+      "post": {
+        "tags": [
+          "Cloud Connectors"
+        ],
+        "summary": "Test Connector",
+        "description": "Test a data source connector connection (KILLER FEATURE).\n\nThis endpoint:\n1. Retrieves the connector from database\n2. Attempts to connect to the database\n3. Executes a test query to verify access\n4. Updates last_tested_at and last_test_status in database\n5. Returns detailed connection results\n\nPath Parameters:\n    connector_id: MongoDB ObjectId of the connector\n\nReturns:\n    Connection test results with status, message, latency, and details",
+        "operationId": "test_connector_api_v1_connectors__connector_id__test_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Connector Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestConnectionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/connectors/{connector_id}/schema": {
+      "get": {
+        "tags": [
+          "Cloud Connectors"
+        ],
+        "summary": "Get Connector Schema",
+        "description": "Extract database schema from a connector (SCHEMA INTROSPECTION).\n\nThis endpoint:\n1. Retrieves the connector from database\n2. Connects to the database\n3. Extracts all tables and columns with data types\n4. Returns structured schema information\n\nThis is the CORE ENGINE for DHCaaS before applying Data Quality Rules.\n\nPath Parameters:\n    connector_id: MongoDB ObjectId of the connector\n\nReturns:\n    Schema structure with tables and columns:\n    {\n        'status': 'success',\n        'schema': {\n            'table_name': [\n                {'column': 'id', 'type': 'integer', 'nullable': False},\n                {'column': 'name', 'type': 'varchar', 'nullable': True}\n            ]\n        },\n        'table_count': 2,\n        'message': 'Successfully extracted schema for 2 tables'\n    }",
+        "operationId": "get_connector_schema_api_v1_connectors__connector_id__schema_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Connector Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/connectors/{connector_id}": {
+      "get": {
+        "tags": [
+          "Cloud Connectors"
+        ],
+        "summary": "Get Connector By Id",
+        "description": "Retrieve a single connector by ID.\nReturns 404 when the connector does not exist OR belongs to a different\ntenant (ADR-001: 404-not-403 policy; never confirm cross-tenant existence).",
+        "operationId": "get_connector_by_id_api_v1_connectors__connector_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Connector Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cloud Connectors"
+        ],
+        "summary": "Delete Connector",
+        "description": "Delete a data source connector.\n\nPath Parameters:\n    connector_id: MongoDB ObjectId of the connector\n\nReturns:\n    Success message",
+        "operationId": "delete_connector_api_v1_connectors__connector_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connector_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Connector Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "root"
+        ],
+        "summary": "Read Root",
+        "description": "Root endpoint - API welcome message.\n\nReturns basic information about the API and links to documentation.",
+        "operationId": "read_root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "description": "Health check endpoint for monitoring and load balancers.\n\nReturns the operational status of the API service.\nThis endpoint should be used by:\n- Docker health checks\n- Kubernetes liveness/readiness probes\n- Load balancers\n- Monitoring systems (Datadog, New Relic, etc.)\n\nReturns:\n    dict: Service health status and metadata",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_create_scan_job_api_v1_scan_jobs__post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_create_scan_job_api_v1_scan_jobs__post"
+      },
+      "Body_scan_dataset_api_v1_analysis_scan_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_scan_dataset_api_v1_analysis_scan_post"
+      },
+      "ConnectorConfig": {
+        "properties": {
+          "host": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Host"
+          },
+          "port": {
+            "type": "integer",
+            "maximum": 65535.0,
+            "minimum": 1.0,
+            "title": "Port"
+          },
+          "username": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Password"
+          },
+          "database": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Database"
+          },
+          "ssl": {
+            "type": "boolean",
+            "title": "Ssl",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "host",
+          "port",
+          "username",
+          "password",
+          "database"
+        ],
+        "title": "ConnectorConfig",
+        "example": {
+          "database": "production_db",
+          "host": "localhost",
+          "password": "SecureP@ss123",
+          "port": 5432,
+          "ssl": true,
+          "username": "admin"
+        }
+      },
+      "ConnectorCreateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ConnectorType"
+          },
+          "config": {
+            "$ref": "#/components/schemas/ConnectorConfig"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "config"
+        ],
+        "title": "ConnectorCreateRequest",
+        "example": {
+          "config": {
+            "database": "prod_db",
+            "host": "db.example.com",
+            "password": "SecureP@ss123",
+            "port": 5432,
+            "ssl": true,
+            "username": "admin"
+          },
+          "name": "Production PostgreSQL",
+          "type": "postgres"
+        }
+      },
+      "ConnectorListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "connectors": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectorResponse"
+            },
+            "type": "array",
+            "title": "Connectors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "connectors"
+        ],
+        "title": "ConnectorListResponse"
+      },
+      "ConnectorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "config": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Config"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "last_tested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Tested At"
+          },
+          "last_test_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Test Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type",
+          "config",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ConnectorResponse"
+      },
+      "ConnectorType": {
+        "type": "string",
+        "enum": [
+          "postgres",
+          "mysql"
+        ],
+        "title": "ConnectorType"
+      },
+      "DQRuleCreate": {
+        "properties": {
+          "rule_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Rule Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "connector_id": {
+            "type": "string",
+            "maxLength": 24,
+            "minLength": 24,
+            "title": "Connector Id"
+          },
+          "table_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Table Name"
+          },
+          "column_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Column Name"
+          },
+          "rule_type": {
+            "$ref": "#/components/schemas/RuleType"
+          },
+          "rule_config": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Rule Config"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity",
+            "default": "medium"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "sample_size": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule_name",
+          "connector_id",
+          "table_name",
+          "column_name",
+          "rule_type"
+        ],
+        "title": "DQRuleCreate",
+        "description": "Request model for creating a new DQ rule",
+        "example": {
+          "column_name": "email",
+          "connector_id": "67b9e8f5a1234567890abcde",
+          "description": "Validates email format in users table",
+          "enabled": true,
+          "rule_config": {
+            "case_sensitive": false,
+            "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+          },
+          "rule_name": "Email Must Be Valid",
+          "rule_type": "regex_match",
+          "severity": "critical",
+          "table_name": "users"
+        }
+      },
+      "DQRuleDeleteResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "id"
+        ],
+        "title": "DQRuleDeleteResponse",
+        "description": "Response model for rule deletion"
+      },
+      "DQRuleListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/DQRuleResponse"
+            },
+            "type": "array",
+            "title": "Rules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "rules"
+        ],
+        "title": "DQRuleListResponse",
+        "description": "Response model for list of DQ rules"
+      },
+      "DQRuleResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rule_name": {
+            "type": "string",
+            "title": "Rule Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "connector_id": {
+            "type": "string",
+            "title": "Connector Id"
+          },
+          "connector_name": {
+            "type": "string",
+            "title": "Connector Name"
+          },
+          "table_name": {
+            "type": "string",
+            "title": "Table Name"
+          },
+          "column_name": {
+            "type": "string",
+            "title": "Column Name"
+          },
+          "data_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Type"
+          },
+          "rule_type": {
+            "type": "string",
+            "title": "Rule Type"
+          },
+          "rule_config": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Rule Config"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "sample_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Size"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "last_executed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Executed At"
+          },
+          "last_execution_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Execution Status"
+          },
+          "last_pass_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Pass Count"
+          },
+          "last_fail_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Fail Count"
+          },
+          "last_pass_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Pass Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "rule_name",
+          "description",
+          "connector_id",
+          "connector_name",
+          "table_name",
+          "column_name",
+          "data_type",
+          "rule_type",
+          "rule_config",
+          "severity",
+          "enabled",
+          "sample_size",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DQRuleResponse",
+        "description": "Response model for DQ rule"
+      },
+      "DQRuleUpdate": {
+        "properties": {
+          "rule_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "rule_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Config"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Severity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "sample_size": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Size"
+          }
+        },
+        "type": "object",
+        "title": "DQRuleUpdate",
+        "description": "Request model for updating an existing DQ rule",
+        "example": {
+          "enabled": false,
+          "rule_name": "Email Must Be Valid - Updated",
+          "severity": "high"
+        }
+      },
+      "GovernancePolicyCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "rule_type": {
+            "type": "string",
+            "title": "Rule Type",
+            "description": "Type of governance rule"
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Threshold",
+            "description": "Threshold value for the policy"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Severity level",
+            "default": "medium"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the policy is enabled",
+            "default": true
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Policy tags"
+          },
+          "target_tables": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Target Tables",
+            "description": "Target tables for the policy"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "rule_type",
+          "threshold"
+        ],
+        "title": "GovernancePolicyCreate",
+        "description": "Request model for creating a governance policy"
+      },
+      "GovernancePolicyUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "rule_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Type"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "target_tables": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Tables"
+          }
+        },
+        "type": "object",
+        "title": "GovernancePolicyUpdate",
+        "description": "Request model for updating a governance policy"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "PolicyCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "rule_type": {
+            "type": "string",
+            "title": "Rule Type",
+            "description": "Type of rule (e.g., completeness, accuracy, custom)"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold",
+            "description": "Threshold value for the policy"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Severity level (LOW, MEDIUM, HIGH, CRITICAL)",
+            "default": "MEDIUM"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the policy is enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "rule_type"
+        ],
+        "title": "PolicyCreate",
+        "description": "Request model for creating a policy"
+      },
+      "PolicyUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "rule_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Type"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          }
+        },
+        "type": "object",
+        "title": "PolicyUpdate",
+        "description": "Request model for updating a policy"
+      },
+      "RuleType": {
+        "type": "string",
+        "enum": [
+          "not_null",
+          "regex_match",
+          "numeric_range",
+          "string_length",
+          "allowed_values"
+        ],
+        "title": "RuleType",
+        "description": "Core rule types for MVP (Sprint 6)"
+      },
+      "ScanJobListResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/ScanJobResponse"
+            },
+            "type": "array",
+            "title": "Jobs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "total",
+          "jobs"
+        ],
+        "title": "ScanJobListResponse",
+        "description": "Response model for list endpoint with pagination",
+        "example": {
+          "jobs": [
+            {
+              "column_names": [
+                "id",
+                "name",
+                "email"
+              ],
+              "created_at": "2026-02-20T14:30:00",
+              "datasource_name": "Customer Database",
+              "filename": "customer_data.csv",
+              "job_id": "550e8400-e29b-41d4-a716-446655440000",
+              "owner": "john@example.com",
+              "quality_score": 85.5,
+              "status": "completed",
+              "total_columns": 15,
+              "total_issues": 25,
+              "total_rows": 1000
+            }
+          ],
+          "success": true,
+          "total": 150
+        }
+      },
+      "ScanJobResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "datasource_name": {
+            "type": "string",
+            "title": "Datasource Name"
+          },
+          "owner": {
+            "type": "string",
+            "title": "Owner"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "total_rows": {
+            "type": "integer",
+            "title": "Total Rows"
+          },
+          "total_columns": {
+            "type": "integer",
+            "title": "Total Columns"
+          },
+          "column_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Column Names"
+          },
+          "quality_score": {
+            "type": "number",
+            "title": "Quality Score"
+          },
+          "total_issues": {
+            "type": "integer",
+            "title": "Total Issues"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "filename",
+          "datasource_name",
+          "owner",
+          "status",
+          "created_at",
+          "total_rows",
+          "total_columns",
+          "column_names",
+          "quality_score",
+          "total_issues"
+        ],
+        "title": "ScanJobResponse",
+        "description": "Response model for API\nSimplified view for list endpoints",
+        "example": {
+          "column_names": [
+            "id",
+            "name",
+            "email",
+            "age"
+          ],
+          "created_at": "2026-02-20T14:30:00",
+          "datasource_name": "Customer Database",
+          "filename": "customer_data.csv",
+          "job_id": "550e8400-e29b-41d4-a716-446655440000",
+          "owner": "john@example.com",
+          "quality_score": 85.5,
+          "status": "completed",
+          "total_columns": 15,
+          "total_issues": 25,
+          "total_rows": 1000
+        }
+      },
+      "Severity": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low"
+        ],
+        "title": "Severity",
+        "description": "Rule severity levels"
+      },
+      "TestConnectionResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "latency_ms": {
+            "type": "integer",
+            "title": "Latency Ms"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message",
+          "latency_ms"
+        ],
+        "title": "TestConnectionResponse"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in",
+          "user"
+        ],
+        "title": "Token",
+        "description": "JWT token response"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Password"
+          },
+          "full_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "editor",
+              "viewer"
+            ],
+            "title": "Role",
+            "default": "viewer"
+          },
+          "company_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Id"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "full_name"
+        ],
+        "title": "UserCreate",
+        "description": "Schema for admin creating new users"
+      },
+      "UserListResponse": {
+        "properties": {
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/UserResponse"
+            },
+            "type": "array",
+            "title": "Users"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "users",
+          "total",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "title": "UserListResponse",
+        "description": "Paginated user list response"
+      },
+      "UserLogin": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLogin",
+        "description": "Schema for user login"
+      },
+      "UserRegister": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Password"
+          },
+          "full_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Full Name"
+          },
+          "company_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "full_name"
+        ],
+        "title": "UserRegister",
+        "description": "Schema for user registration"
+      },
+      "UserResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "editor",
+              "viewer"
+            ],
+            "title": "Role"
+          },
+          "company_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Id"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "last_login": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role",
+          "company_id",
+          "is_active",
+          "is_verified",
+          "created_at",
+          "updated_at",
+          "last_login"
+        ],
+        "title": "UserResponse",
+        "description": "Public user data (without sensitive info)"
+      },
+      "UserUpdate": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "admin",
+                  "editor",
+                  "viewer"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "company_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Id"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "is_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Verified"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "title": "UserUpdate",
+        "description": "Schema for updating user details (partial updates allowed)"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

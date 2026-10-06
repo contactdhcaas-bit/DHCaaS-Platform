@@ -157,7 +157,7 @@ const ReportsPage: React.FC = () => {
 
   // ===== API FUNCTIONS =====
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -225,7 +225,7 @@ const ReportsPage: React.FC = () => {
 
       // Automatically download the report
       const downloadUrl = `${API_BASE_URL}${generateData.download_url}`;
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
       
       // Create a temporary link to download
       const link = document.createElement('a');
@@ -252,7 +252,7 @@ const ReportsPage: React.FC = () => {
 
   const handleDownloadReport = async (reportId: string, fileName: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
       const downloadUrl = `${API_BASE_URL}/api/v1/reports/download/${reportId}`;
       
       // Open in new tab for download

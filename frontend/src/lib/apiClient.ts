@@ -49,7 +49,7 @@ export interface BackendSource {
  */
 function getStoredToken(): string | null {
   // Try direct token first
-  const direct = localStorage.getItem("token");
+  const direct = localStorage.getItem("access_token");
   if (direct) return direct;
 
   // Try Zustand persist store

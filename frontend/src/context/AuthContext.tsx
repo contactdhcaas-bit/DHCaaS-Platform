@@ -1,4 +1,4 @@
-﻿// src/context/AuthContext.tsx
+// src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(JSON.parse(storedUser));
 
           // Verify token by calling /api/v1/auth/me
-          const response = await axios.get('http://localhost:8000/api/v1/auth/me', {
+          const response = await axios.get('/api/v1/auth/me', {
             headers: { Authorization: `Bearer ${storedToken}` },
           });
 
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string) => {
     try {
       const response = await axios.post<LoginResponse>(
-        'http://localhost:8000/api/v1/auth/login',
+        '/api/v1/auth/login',
         { email, password }
       );
 

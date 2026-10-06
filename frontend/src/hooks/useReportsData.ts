@@ -98,7 +98,7 @@ export interface AuditReport {
 // ============================================================
 
 const fetchComplianceSummary = async (days: number = 30): Promise<ComplianceSummary> => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('access_token');
   const { data } = await axios.get(`${API_BASE_URL}/api/reports/summary`, {
     params: { days },
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -107,7 +107,7 @@ const fetchComplianceSummary = async (days: number = 30): Promise<ComplianceSumm
 };
 
 const fetchComplianceTrend = async (days: number = 30): Promise<ComplianceTrend> => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('access_token');
   const { data } = await axios.get(`${API_BASE_URL}/api/reports/trend`, {
     params: { days },
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -116,7 +116,7 @@ const fetchComplianceTrend = async (days: number = 30): Promise<ComplianceTrend>
 };
 
 const fetchAuditReport = async (days: number = 30): Promise<AuditReport> => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('access_token');
   const { data } = await axios.get(`${API_BASE_URL}/api/reports/audit`, {
     params: { days },
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -161,7 +161,7 @@ export const useAuditReport = (days: number = 30) => {
 
 export const downloadPDFReport = async () => {
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     const response = await axios.get(`${API_BASE_URL}/api/reports/summary-report/pdf`, {
       responseType: 'blob',
       headers: token ? { Authorization: `Bearer ${token}` } : {},

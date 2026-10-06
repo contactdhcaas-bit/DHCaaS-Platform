@@ -1,8 +1,11 @@
-﻿// src/services/api.ts
+// src/services/api.ts
 // DHCaaS API Service Layer - Unified Axios Client
 // Centralized API client for all backend communication
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
+
+let _isRedirecting = false;
+
 
 // ===== BASE CONFIGURATION =====
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -33,7 +36,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !_isRedirecting) {
       // Clear invalid token
       localStorage.removeItem('access_token');
       // Redirect to login if needed

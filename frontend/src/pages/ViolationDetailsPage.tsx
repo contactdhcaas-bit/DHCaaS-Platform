@@ -38,7 +38,7 @@ const ViolationDetailsPage: React.FC = () => {
         `${API_URL}/api/v1/rules/dataset/${jobId}/violations`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
         }
       );

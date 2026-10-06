@@ -2,7 +2,7 @@ import axios from "axios";
 
 function getStoredToken(): string | null {
   // Support both legacy "token" and Zustand persist key "dhc_auth_store"
-  const direct = localStorage.getItem("token");
+  const direct = localStorage.getItem("access_token");
   if (direct) return direct;
 
   const raw = localStorage.getItem("dhc_auth_store");
