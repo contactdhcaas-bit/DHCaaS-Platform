@@ -34,3 +34,6 @@ context_for_gpt.txt
 connector_sources_dump.txt
 extracted_sources.txt
 
+
+.testsprite/
+
