@@ -1,4 +1,4 @@
-﻿"""
+"""
 DHCaaS Backend - Main Application Entry Point
 Enterprise Data Health Check as a Service API
 
@@ -19,7 +19,7 @@ from datetime import datetime
 from app.api.v1.api import api_router
 
 # Import database functions
-from app.database import connect_to_mongo, close_mongo_connection
+from app.core.database import connect_to_mongo, close_mongo_connection
 
 
 # ===== APPLICATION CONFIGURATION =====
@@ -32,12 +32,12 @@ app = FastAPI(
     and compliance management for enterprise data teams.
 
     ### Key Features:
-    - 📊 **Data Quality Scanning** - Multi-dimensional quality analysis
-    - 🛡️ **Compliance Monitoring** - GDPR, CCPA, HIPAA compliance checks
-    - 🤖 **Predictive Analytics** - ML-powered anomaly detection
-    - 📈 **Quality Metrics** - Completeness, validity, consistency, accuracy
-    - 🔍 **PII Detection** - Automatic sensitive data identification
-    - 📄 **PDF Reports** - Professional compliance reports
+    - ?? **Data Quality Scanning** - Multi-dimensional quality analysis
+    - ??? **Compliance Monitoring** - GDPR, CCPA, HIPAA compliance checks
+    - ?? **Predictive Analytics** - ML-powered anomaly detection
+    - ?? **Quality Metrics** - Completeness, validity, consistency, accuracy
+    - ?? **PII Detection** - Automatic sensitive data identification
+    - ?? **PDF Reports** - Professional compliance reports
 
     ### API Versions:
     - **v1**: Current stable version (documented here)
@@ -107,7 +107,7 @@ async def read_root():
     Returns basic information about the API and links to documentation.
     """
     return {
-        "message": "DHCaaS Enterprise API is Running 🚀",
+        "message": "DHCaaS Enterprise API is Running ??",
         "service": "Data Health Check as a Service",
         "version": "1.0.0",
         "status": "operational",
@@ -253,12 +253,12 @@ async def startup_event():
     - Starting background tasks
     """
     print("=" * 60)
-    print("🚀 DHCaaS API Starting...")
+    print("?? DHCaaS API Starting...")
     print("=" * 60)
-    print(f"📦 Version: 1.0.0")
-    print(f"🌐 CORS Origins: {', '.join(origins)}")
-    print(f"📚 Documentation: http://localhost:8000/docs")
-    print(f"💚 Health Check: http://localhost:8000/health")
+    print(f"?? Version: 1.0.0")
+    print(f"?? CORS Origins: {', '.join(origins)}")
+    print(f"?? Documentation: http://localhost:8000/docs")
+    print(f"?? Health Check: http://localhost:8000/health")
     print("=" * 60)
 
     # Initialize MongoDB connection
@@ -270,7 +270,7 @@ async def startup_event():
     # TODO: Load ML models
     # await ml_models.load()
 
-    print("✅ DHCaaS API Started Successfully!")
+    print("? DHCaaS API Started Successfully!")
     print("=" * 60)
 
 
@@ -287,7 +287,7 @@ async def shutdown_event():
     - Graceful background task termination
     """
     print("=" * 60)
-    print("🛑 DHCaaS API Shutting Down...")
+    print("?? DHCaaS API Shutting Down...")
     print("=" * 60)
 
     # Close MongoDB connection
@@ -296,7 +296,7 @@ async def shutdown_event():
     # TODO: Close Redis cache
     # await redis_cache.disconnect()
 
-    print("✅ DHCaaS API Stopped Successfully!")
+    print("? DHCaaS API Stopped Successfully!")
     print("=" * 60)
 
 
