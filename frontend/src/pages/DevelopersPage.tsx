@@ -345,7 +345,7 @@ headers = {
 
 response = requests.post(
 
-    `${DOCS_API_URL}/scans`,
+    http://localhost:8000/api/v1/scans,
 
     headers=headers,
 
@@ -367,7 +367,7 @@ print(response.json())`,
 
     curl: `# Use your API key in the X-API-Key header
 
-curl -X POST `${DOCS_API_URL}/scans` \\
+curl -X POST http://localhost:8000/api/v1/scans \\
 
   -H "X-API-Key: ${generatedKey || 'YOUR_API_KEY_HERE'}" \\
 
@@ -391,7 +391,7 @@ const apiKey = "${generatedKey || 'YOUR_API_KEY_HERE'}";
 
 // Example: Trigger a data quality scan
 
-fetch(`${DOCS_API_URL}/scans`, {
+fetch(http://localhost:8000/api/v1/scans, {
 
   method: "POST",
 
@@ -1164,5 +1164,6 @@ fetch(`${DOCS_API_URL}/scans`, {
 
 
 export default DevelopersPage;
+
 
 

@@ -1,4 +1,4 @@
-﻿// src/App.tsx
+// src/App.tsx
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -134,7 +134,7 @@ const App: React.FC = () => {
             <Route path="/customer360" element={<Customer360Page />} />
 
             {/* Developer Portal */}
-            <Route path="/developers" element={<DevelopersPage />} />
+<Route path="/developers" element={<DevelopersPage />} />
 
             {/* Cloud Connectors */}
             <Route path="/connectors" element={<ConnectorsPage />} />
@@ -150,3 +150,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+

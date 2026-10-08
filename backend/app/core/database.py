@@ -1,4 +1,4 @@
-﻿# app/core/database.py
+# app/core/database.py
 """
 MongoDB Database Connection
 Production-grade connection with retry logic and connection pooling
@@ -28,7 +28,7 @@ async def connect_to_mongo():
         # Get MongoDB URI from environment or use default
         MONGODB_URI = os.getenv(
             "MONGODB_URI",
-            "mongodb://localhost:27017"
+            "mongodb://127.0.0.1:27017"
         )
         DATABASE_NAME = os.getenv("DATABASE_NAME", "dhcaas_db")
         
@@ -37,10 +37,9 @@ async def connect_to_mongo():
         
         # Create Motor client with connection pooling
         db_instance.client = AsyncIOMotorClient(
-            MONGODB_URI,
+            MONGODB_URI, serverSelectionTimeoutMS=5000,
             maxPoolSize=10,
             minPoolSize=1,
-            serverSelectionTimeoutMS=5000,
         )
         
         # Verify connection
@@ -329,3 +328,6 @@ async def create_violation(violation: dict):
         violation["violation_id"] = f"viol_{uuid.uuid4().hex[:24]}"
     
     return await db.violations.insert_one(violation)
+
+
+
